@@ -47,7 +47,7 @@ class MockStateSnapshot
 end
 
 
-class TestDeadpoolAdminServer < Test::Unit::TestCase
+class AdminServerTest < Test::Unit::TestCase
 
   def setup
     @admin_server                 = MockServer.new
