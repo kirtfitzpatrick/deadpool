@@ -1,6 +1,4 @@
-
 require 'test/test_helper'
-
 
 class TestDeadpoolMonitorMysql < Test::Unit::TestCase
   

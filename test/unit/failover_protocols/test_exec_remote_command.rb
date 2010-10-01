@@ -1,6 +1,5 @@
 require 'test/test_helper'
 
-
 class TestDeadpoolFailoverProtocolExecRemoteCommand < Test::Unit::TestCase
 
   def setup

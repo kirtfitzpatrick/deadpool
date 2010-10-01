@@ -1,6 +1,5 @@
 require 'test/test_helper'
 
-
 class TestDeadpoolFailoverProtocolEtcHosts < Test::Unit::TestCase
 
   def setup
@@ -29,7 +28,5 @@ class TestDeadpoolFailoverProtocolEtcHosts < Test::Unit::TestCase
     assert(@etc_hosts.promote_to_primary_on_client(client, @config['secondary_host']), "Assign Secondary On Client")
     assert_equal(false, @etc_hosts.verify_client(client), "Verify Client")
   end
-
-
 
 end
