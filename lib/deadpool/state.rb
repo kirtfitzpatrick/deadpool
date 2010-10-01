@@ -1,0 +1,80 @@
+
+
+
+module Deadpool
+  
+  OK       = 0
+  WARNING  = 1
+  CRITICAL = 2
+  UNKNOWN  = 3
+
+  class State
+    
+    attr_reader :name, :timestamp, :status_code, :error_messages, :all_messages
+    
+    def initialize(name)
+      @name   = name
+      @locked = false
+      reset!
+    end
+
+    def lock
+      @locked = true
+    end
+
+    def unlock
+      @locked = false
+    end
+
+    def set_state(code, message)
+      unless @locked
+        if code == OK
+          @timestamp      = Time.now
+          @status_code    = OK
+          @error_messages = []
+          @all_messages   = [message]
+        else
+          @timestamp      = Time.now
+          @status_code    = code
+          @error_messages = [message]
+          @all_messages   = []
+        end
+      end
+    end
+    
+    def reset!(message=nil)
+      unless @locked
+        @timestamp      = Time.now
+        @status_code    = OK
+        @error_messages = []
+        @all_messages   = message.nil? ? [] : [message]
+      end
+    end
+    
+    def escalate_status_code(code)
+      unless @locked
+        @timestamp = Time.now
+      
+        if code >= @status_code
+          @status_code = code
+        end
+      end
+    end
+
+    def add_message(message)
+      unless @locked
+        @timestamp = Time.now
+        @all_messages << message
+      end
+    end
+
+    def add_error_message(message)
+      unless @locked
+        @timestamp = Time.now
+        @error_messages << message
+        # @all_messages << message
+      end
+    end
+  end
+
+end

@@ -1,0 +1,7 @@
+
+pid_file: '/var/run/deadpool.pid'
+log_file: '/var/log/deadpool.log'
+log_level: INFO
+admin_hostname: 'localhost'
+admin_port: 5507
+system_check_interval: 30

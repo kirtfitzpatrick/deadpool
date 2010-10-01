@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+
+require File.join(File.dirname(File.dirname(__FILE__)), 'lib', 'deadpool')
+
+EventMachine::run {
+  Deadpool::Server.new(ARGV)
+}

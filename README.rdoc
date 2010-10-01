@@ -1,0 +1,104 @@
+= Motivation
+
+We are restricted in our team that we don't always get to chose the hosting provider and each project always has different requirements.  The failover systems out there seem to ask "set your system up like this and then you can use this failover solution."  We don't always have that luxury but we'll still be responsible if something goes down.  So we wrote this to adapt to the various systems we have.  It can do a failover in a manner that would be considered a best practice, or it can do a failover in a more hacky method because that's your only option.  And if there are any additional tasks that you need done before or after a failover, it can do those too.  And of course, the whole thing can report the full status of each item in the system to Nagios.
+
+
+= Goals
+
+* Failover via /etc/hosts, VIP, or someother means we haven't thought of yet.
+* Restart applications of various forms (Rails apps, job server).
+* Perform the failover or reset the failover manually from the command line.
+* Mix and match monitoring and failover plugins.
+* Monitor things well enough that it will know if something changed in the system that would prevent it from doing it's job if it were to need to.
+* Accurately report failover service status to Nagios.
+* Provide a full system diagnostic much like MogileFS does via the command line.
+
+
+= Overview
+
+== Plugin Architecture
+
+Since there are guaranteed to be edge cases that hundreds of developers have that I don't have, this has a straigh-forward mechanism to develop plugins and drop them in a config directory and use them right along side the built in stuff.
+
+Suppose you're using PostgreSQL not MySQL.  You could write a simple monitor for PostgreSQL, specify that you want to use the PostgreSQL monitor in your pool config and use the existing Failover Protocols to perform the failover.  Or you could write your own Failover Protocols and use the built-in monitors or both.
+
+== Chainable Failover Protocols
+
+Chainable failover protocols means you can take two or more Failover Protocols and have them execute in succession in the event of a failover.
+
+
+== Multiple Services
+
+Multiple services (ex. mysql_development, mysql_staging, redis) can be configured under a single instance and multiple instances can be configured to run on a single box. We did this so you can develop your own custom plugins and deploy them to a staging instance without risking production.
+
+
+== Monitoring
+
+There are lots of moving parts.  Since a failover system is worthless if you don't know when it's down or when something has changed that would prevent it from working.  The first design decision was that the whole system had to be able to determine it's status and report it.  Probably half the code in this gem is just to monitor itself.  Deadpool can test each point of failure and report when something is out of place.  Meaning it tests more than MySQL, it tests that all the app servers are pointing at the correct database and that it has write permission on the file it would have to change and such.
+
+
+    $ deadpool_admin --nagios_report
+    OK -  last checked 12 seconds ago.
+
+
+    $ deadpool_admin --full_report
+    System Status: OK
+
+    Deadpool::Server
+    OK - checked 2 seconds ago.
+
+      Deadpool::Handler - staging_database
+      OK - checked 3 seconds ago.
+      Primary Check OK.
+
+        Deadpool::Monitor::Mysql - staging_database
+        OK - checked 2 seconds ago.
+        Primary and Secondary are up.
+
+        Deadpool::FailoverProtocol::EtcHosts - staging_database
+        OK - checked 2 seconds ago.
+        Write check passed all servers: 10.1.2.3, 10.1.2.4
+        All client hosts are pointed at the primary.
+
+        Deadpool::FailoverProtocol::ExecRemoteCommand - staging_database
+        OK - checked 1 seconds ago.
+        Exec test passed all servers: 10.1.2.3, 10.1.2.4
+
+      Deadpool::Handler - dev_database
+      OK - checked 3 seconds ago.
+      Primary Check OK.
+
+        Deadpool::Monitor::Mysql - dev_database
+        OK - checked 1 seconds ago.
+        Primary and Secondary are up.
+
+        Deadpool::FailoverProtocol::EtcHosts - dev_database
+        OK - checked 0 seconds ago.
+        Write check passed all servers: 10.1.2.3, 10.1.2.4
+        All client hosts are pointed at the primary.
+
+        Deadpool::FailoverProtocol::ExecRemoteCommand - dev_database
+        OK - checked 0 seconds ago.
+        Exec test passed all servers: 10.1.2.3, 10.1.2.4
+
+
+
+
+
+== How it works
+
+It periodically checks that the primary is okay at an interval of your choosing.  When the primary check has failed enough times in a row to exceed a threshold of your choosing it will execute the failover protocol.  The failover protocol is really a list of failover protocols in order.  Generally each one will perform a preflight check first.  As each one finishes the failover it records it's state and success or failure.  Once it's all done, deadpool locks the state so an admin can see what happened and if there was a failure along the way.  Deadpool is a single use tool.  Once it's failed over, it's done.  It can perform a manual promotion from the command line but it will have to be restarted to work again.  It does not attempt to fail back over if the primary comes back online.  That just sounds way too risky.
+
+
+
+
+= Installing/Setup
+
+
+    $ gem install deadpool
+    $ deadpool_config_gen --path=/etc/deadpool
+    $ 
+
+
+
+

@@ -1,0 +1,12 @@
+pool_name: 'mysql_test'
+check_interval: 1
+max_failed_checks: 10
+primary_host:   10.1.2.1 # staging db 02
+secondary_host: 10.1.2.2 # staging db 01
+
+
+monitor_config:
+  monitor: Mysql
+  nagios_plugin_path: '/usr/lib/nagios/plugins'
+
+

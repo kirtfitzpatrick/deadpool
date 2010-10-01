@@ -1,0 +1,222 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'ostruct'
+require 'strscan'
+
+class EtcHostsSwitch
+
+  def run
+    @options = self.parse_command_line
+    self.execute_command(@options)
+  end
+
+  def parse_command_line
+    options          = OpenStruct.new
+    options.command_count = 0
+
+    @option_parser = OptionParser.new do |opts|
+      opts.banner = "Usage: etc_hosts_switch {help|test|verify|switch} [options]"
+
+      opts.separator "Commands:"
+      opts.on("-h", "--help", "Print this help message.") do |h|
+        options.help         = h
+        options.command_count += 1
+        options.command      = :help
+      end
+      opts.on("--test", "Test that /etc/hosts can be touched.") do |t|
+        options.test         = t
+        options.command_count += 1
+        options.command      = :test
+      end
+      opts.on("--verify", "Verify that /etc/hosts hast the IP address that you think it should.") do |v|
+        options.verify       = v
+        options.command_count += 1
+        options.command      = :verify
+      end
+      opts.on("--switch", "Change the IP address in /etc/hosts") do |s|
+        options.switch       = s
+        options.command_count += 1
+        options.command      = :switch
+      end
+      
+      opts.separator "Options:"
+      opts.on("--host_name=HOSTNAME", String, "Hostname to regex on in /etc/hosts") do |h|
+        options.host_name = h
+      end
+      opts.on("--ip_address=IP_ADDRESS", String, "IP Address") do |ip|
+        options.ip_address = ip
+      end
+      opts.on("--hosts_file=HOST_FILE_PATH", String, "Alternate Path for the Hosts file") do |hosts|
+        options.hosts_file = hosts
+      end
+      opts.on("--verbose", "Verbose Messages.") do |v|
+        options.verbose = v
+      end
+      opts.on("--debug", "Creates a dummy hosts file at /tmp/hosts and operates on that.  Overrides the alternate hosts file option.") do |d|
+        options.debug = d
+      end
+    end
+
+    # Parse and verify
+    remaining_arguments = @option_parser.parse!
+
+    unless remaining_arguments.empty?
+      help "[#{remaining_arguments.join(' ')}] is not understood."
+    end
+    
+    if options.command_count == 0
+      help "You must specify a command."
+    end
+
+    option_sum = (options.help ? 1 : 0) + (options.test ? 1 : 0) + (options.verify ? 1 : 0) + (options.switch ? 1 : 0)
+    if option_sum > 1
+      help "Only one command can be specified."
+    end
+
+    if options.verify
+      options_valid = true
+
+      if options.ip_address.nil?
+        puts "The verify command requires an ip_address argument."
+        options_valid = false
+      elsif ! options.ip_address.match(/\d+\.\d+\.\d+\.\d+/)
+        puts "ip_address doesn't look valid."
+        options_valid = false
+      end
+
+      if options.host_name.nil?
+        puts "The verify command requires a host_name argument."
+        options_valid = false
+      elsif options.host_name.size < 4
+        puts "The host_name parameter must be longer than 4 characters."
+        options_valid = false
+      end
+
+      unless options_valid
+        help
+      end
+    end
+
+
+    return options
+  end
+
+  def execute_command(options)
+    case options.command
+    when :help
+      help
+    when :test
+      test options
+    when :verify
+      verify options
+    when :switch
+      switch options
+    else
+      help
+    end
+  end
+
+  def help(message=nil)
+    unless message.nil?
+      puts message
+    end
+    puts @option_parser.help
+    exit 4
+  end
+
+  def test(options)
+    path = host_file_path(options)
+    out = `touch #{path} 2> /dev/null`
+
+    if $? == 0
+      puts "OK - #{path} is writable"
+      exit 0
+    else
+      puts "ERROR - #{path} is NOT writable"
+      exit 1
+    end
+  end
+
+  def verify(options)
+    scanner  = StringScanner.new File.read(host_file_path(options))
+    verified = scanner.exist?(/#{options.ip_address}\s+#{options.host_name}\s+/)
+
+    if verified
+      puts "OK - #{options.host_name} was verified to point at #{options.ip_address}"
+      exit 0
+    else
+      puts "ERROR - #{options.host_name} does not point at #{options.ip_address}"
+      exit 1
+    end
+  end
+
+  def switch(options)
+    path = host_file_path(options)
+    scanner  = StringScanner.new File.read(path)
+    host_exists = scanner.exist?(/\s+#{options.host_name}\s+/)
+
+    if host_exists
+      scanner.reset
+      scanner.scan_until(/\n.+#{options.host_name}\s*\n/)
+      pre_match  = scanner.pre_match
+      matched    = scanner.matched
+      post_match = scanner.post_match
+      verbose_message "\nPreceding lines: \n#{pre_match}"
+      verbose_message "\nMatched host definition: \n#{matched}"
+      verbose_message "\nFollowing lines: \n#{post_match}"
+      replacement_file = pre_match
+      replacement_file += "\n#{options.ip_address}  #{options.host_name}\n"
+      replacement_file += post_match
+      verbose_message "Replacement hosts file:\n#{replacement_file}"
+      verbose_message "Writing hosts file..."
+      hosts_file = File.open path, 'w'
+      hosts_file.write replacement_file
+      hosts_file.close
+      puts "OK - Host definition replaced successfully."
+      exit 0
+    else
+      replacement_file = File.read(path)
+      replacement_file += "\n#{options.ip_address}  #{options.host_name}\n"
+      verbose_message "Replacement hosts file:\n#{replacement_file}"
+      verbose_message "Writing hosts file..."
+      hosts_file = File.open path, 'w'
+      hosts_file.write replacement_file
+      hosts_file.close
+      puts "OK - Host definition added successfully."
+      exit 0
+    end
+  end
+
+  def host_file_path(options)
+    if options.debug
+      file = File.open '/tmp/hosts', 'w'
+      file.write DATA.read
+      file.close
+      return '/tmp/hosts'
+    elsif options.hosts_file
+      return options.hosts_file
+    else
+      return '/etc/hosts'
+    end
+  end
+
+  def verbose_message(message)
+    if @options.verbose
+      puts message
+    end
+  end
+
+end
+
+EtcHostsSwitch.new.run
+
+__END__
+127.0.0.1           localhost localhost.localdomain
+184.106.205.117     web-01
+
+123.456.78.9  test_host_name
+123.456.78.9  other_service_that_shouldnt_be.touched
+123.456.78.9  test_host_name.similar
+
+

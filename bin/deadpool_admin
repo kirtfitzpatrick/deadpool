@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+
+require File.join(File.dirname(File.dirname(__FILE__)), 'lib', 'deadpool')
+
+
+Deadpool::Admin.new(ARGV).run
+

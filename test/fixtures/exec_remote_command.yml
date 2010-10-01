@@ -1,0 +1,15 @@
+
+
+pool_name: 'exec_remote_command_test'
+primary_host: 0.0.0.1
+secondary_host: 0.0.0.2
+
+failover_protocol_configs:
+  - protocol_class: ExecRemoteCommand
+    test_command: 'echo "testing..."'
+    exec_command: 'echo "executing..."'
+    # username: 'deadpool'
+    # password: 'pswd'
+    use_sudo: 1
+    client_hosts:
+      - '127.0.0.1'
