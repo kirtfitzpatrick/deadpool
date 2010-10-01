@@ -21,7 +21,7 @@ class MockDeadpoolServer
   attr_accessor :logger
   
   def initialize
-    @logger = Logger.new STDOUT
+    @logger = Logger.new("/dev/null")
   end
   
   def system_check(force=false)
