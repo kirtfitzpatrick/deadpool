@@ -1,0 +1,39 @@
+pool_name:         'test.database'
+primary_host:      'localhost'
+secondary_host:    '127.0.0.1'
+check_interval:    1
+max_failed_checks: 10
+
+# There can be only one monitor per pool at this time.  The deadpool system
+# defines no rules for the monitor configuration except that it is called
+# monitor_config: and has monitor_class: defined at the base level.
+# All other configuration variables are plugin specific.
+monitor_config:
+  monitor_class: Mysql
+  nagios_plugin_path: '/usr/lib/nagios/plugins'
+
+# There can be as many Failover Protocols as you want and you can use
+# the same plugin multiple times.  The deadpool defines no rules for the
+# failover protocol config except that it be an array element of
+# failover_protocol_configs and defines protocol_class at it's base.  The rest
+# of the configuration is specific to the failover protocol.
+failover_protocol_configs:
+  - protocol_class: EtcHosts
+    script_path: 'etc_hosts_switch'
+    service_host_name: 'master.mysql.example.project.client'
+    username: ''
+    password: ''
+    use_sudo: 0
+    client_hosts:
+      - 'localhost'   # app server 1 (web server)
+      - '127.0.0.1'   # app server 2 (web server)
+
+  - protocol_class: ExecRemoteCommand
+    test_command: '/etc/init.d/nginx status'
+    exec_command: '/etc/init.d/nginx restart'
+    username: 'deadpool'
+    password: 'p4ssw0rd'
+    use_sudo: 0
+    client_hosts:
+      - 'localhost'   # app server 1 (web server)
+      - '127.0.0.1'   # app server 2 (web server)
