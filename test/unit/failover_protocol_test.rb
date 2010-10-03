@@ -20,49 +20,44 @@ class FailoverProtocolTest < Test::Unit::TestCase
     assert_instance_of Deadpool::StateSnapshot, @failover.system_check
   end
 
-  # # Overwrite this if you need to.
-  # # Update state to reflect that failover has been initiated.
-  # # State must be updated to no less than WARNING.
-  # # State must be CRITICAL if any step of the protocol fails.
-  # # Lock the state at whatever stage the failover reached.
-  # # return true or false on success or failure.
-  # # 
-  # def initiate_failover_protocol!
-  #   logger.info "Performing Preflight Check"
-  #   @state.set_state WARNING, "Failover Protocol Initiated."
-  # 
-  #   if preflight_check
-  #     logger.info "Preflight Check Passed."
-  #     @state.add_message "Preflight Check Passed."
-  #   else
-  #     logger.error "Preflight Check Failed!  Aborting Failover Protocol."
-  #     @state.escalate_status_code CRITICAL
-  #     @state.add_error_message "Preflight Check Failed! Failover Protocol Aborted!"
-  #     @state.lock
-  #     return false
-  #   end
-  # 
-  #   if promote_to_primary(@secondary_host)
-  #     logger.info "#{@secondary_host} successfully promoted to primary"
-  #     @state.add_message "Failover Protocol Successful."
-  #     @state.lock
-  #     return true
-  #   else
-  #     logger.info "#{@secondary_host} promotion failed."
-  #     @state.escalate_status_code CRITICAL
-  #     @state.add_error_message "Failover Protocol Failed!"
-  #     @state.lock
-  #     return false
-  #   end
-  # end
-
   def test_successful_failover
     @failover.expects(:preflight_check).returns(true)
     @failover.expects(:promote_to_primary).returns(true)
+
     assert @failover.initiate_failover_protocol!
 
+    assert_locked
+    assert_status Deadpool::WARNING
+  end
+
+  def test_failure_on_preflight_check
+    @failover.expects(:preflight_check).returns(false)
+    @failover.expects(:promote_to_primary).never
+
+    assert !@failover.initiate_failover_protocol!
+
+    assert_locked
+    assert_status Deadpool::CRITICAL
+  end
+
+  def test_failure_on_promotion_to_primary
+    @failover.expects(:preflight_check).returns(true)
+    @failover.expects(:promote_to_primary).returns(false)
+
+    assert !@failover.initiate_failover_protocol!
+
+    assert_locked
+    assert_status Deadpool::CRITICAL
+  end
+
+  # Custom assertions
+
+  def assert_locked
     state = @failover.instance_eval { @state }
     assert state.instance_eval { @locked }
-    assert_equal Deadpool::WARNING, state.status_code
+  end
+
+  def assert_status(status_code)
+    assert_equal status_code, @failover.system_check.overall_status
   end
 end
