@@ -29,6 +29,7 @@ module Deadpool
   end
 
   module Monitor
+    autoload :Base,  'deadpool/monitor/base'
     autoload :Mysql, 'deadpool/monitor/mysql'
   end
 
