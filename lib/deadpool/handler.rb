@@ -43,6 +43,7 @@ module Deadpool
         timer.cancel
         @state.set_state(WARNING, "Failure threshold exceeded.  Failover Protocol Initiated.")
         logger.error "#{@pool_name} primary is dead.  Initiating Failover Protocol."
+
         success = true
         @failover_protocols.each do |failover_protocol|
           success = success and failover_protocol.initiate_failover_protocol!
