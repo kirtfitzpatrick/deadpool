@@ -19,11 +19,13 @@ module Deadpool
     end
 
     def overall_status
-      @children.map { |c| c.overall_status }.push(@status_code).max
+      @children.map { |child| child.overall_status }.push(@status_code).max
     end
 
     def all_error_messages
-      @children.inject(@error_messages) { |m,c| m + c.all_error_messages }
+      @children.inject(@error_messages) do |arr, child|
+        arr + child.all_error_messages
+      end
     end
 
     def nagios_report
