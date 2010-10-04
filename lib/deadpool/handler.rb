@@ -73,16 +73,9 @@ module Deadpool
     end
 
     def promote_server(server)
-      unless @config[server].nil?
-        okay = true
-
-        @failover_protocols.each do |failover_protocol|
-          okay = okay and failover_protocol.promote_to_primary @config[server]
-        end
-
-        return okay
-      else
-        return false
+      # This will stop at the first failure
+      @config[server] && @failover_protocols.all? do |failover_protocol|
+        failover_protocol.promote_to_primary @config[server]
       end
     end
 

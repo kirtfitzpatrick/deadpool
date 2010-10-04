@@ -19,15 +19,7 @@ module Deadpool
       end
 
       def preflight_check
-        clients_tested_okay   = true
-        clients_verified_okay = true
-
-        @client_hosts.each do |client_host|
-          clients_tested_okay   = clients_tested_okay and test_client(client_host)
-          clients_verified_okay = clients_verified_okay and verify_client(client_host)
-        end
-
-        return (clients_tested_okay and clients_verified_okay)
+        @client_hosts.map { |h| test_client(h) && verify_client(h) }.all?
       end
 
       def test_client(client_host)
@@ -64,14 +56,10 @@ module Deadpool
       end
 
       def promote_to_primary(new_primary)
-        # logger.debug "New Primary: #{new_primary}"
-        promotion_successful = true
-        @client_hosts.each do |client_host|
+        @client_hosts.map do |client_host|
           # logger.debug "client_host: #{client_host}, New Primary: #{new_primary}"
-          promotion_successful = promotion_successful and promote_to_primary_on_client(client_host, new_primary)
-        end
-    
-        return promotion_successful
+          promote_to_primary_on_client(client_host, new_primary)
+        end.all?
       end
 
       def promote_to_primary_on_client(client_host, new_primary)
@@ -118,9 +106,9 @@ module Deadpool
         end
     
         # Compile write check data.
-        if !writable.empty? and not_writable.empty?
+        if !writable.empty? && not_writable.empty?
           @state.set_state OK, "Write check passed all servers: #{writable.join(', ')}"
-        elsif !writable.empty? and !not_writable.empty?
+        elsif !writable.empty? && !not_writable.empty?
           @state.set_state WARNING, "Write check passed on: #{writable.join(', ')}"
           @state.add_error_message "Write check failed on #{not_writable.join(', ')}"
         elsif writable.empty?
@@ -129,9 +117,9 @@ module Deadpool
     
 
         # Compile verification data
-        if !pointed_at_primary.empty? and pointed_at_secondary.empty? and pointed_at_neither.empty?
+        if !pointed_at_primary.empty? && pointed_at_secondary.empty? && pointed_at_neither.empty?
           @state.add_message "All client hosts are pointed at the primary."
-        elsif pointed_at_primary.empty? and !pointed_at_secondary.empty? and pointed_at_neither.empty?
+        elsif pointed_at_primary.empty? && !pointed_at_secondary.empty? && pointed_at_neither.empty?
           @state.escalate_status_code WARNING
           @state.add_error_message "All client hosts are pointed at the secondary."
         else

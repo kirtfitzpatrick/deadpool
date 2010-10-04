@@ -27,11 +27,11 @@ module Deadpool
         primary_okay   = primary_ok?
         secondary_okay = secondary_ok?
 
-        if primary_okay and secondary_okay
+        if primary_okay && secondary_okay
           @state.set_state OK, "Primary and Secondary are up."
-        elsif !primary_okay and secondary_okay
+        elsif !primary_okay && secondary_okay
           @state.set_state WARNING, "Primary is down.  Secondary is up."
-        elsif primary_okay and !secondary_okay
+        elsif primary_okay && !secondary_okay
           @state.set_state WARNING, "Primary is up.  Secondary is down."
         else
           @state.set_state CRITICAL, "Primary and Secondary are down."

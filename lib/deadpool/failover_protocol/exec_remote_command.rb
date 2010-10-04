@@ -19,13 +19,7 @@ module Deadpool
       # Don't update system state.
       # return true or false success or failure
       def preflight_check
-        okay = true
-
-        @client_hosts.each do |client_host|
-          okay = okay and test_client(client_host)
-        end
-
-        return okay
+        @client_hosts.all? { |client_host| test_client(client_host) }
       end
 
       def test_client(client_host)
@@ -70,9 +64,9 @@ module Deadpool
         end
 
         # Compile write check data.
-        if !succeeded.empty? and failed.empty?
+        if !succeeded.empty? && failed.empty?
           @state.set_state OK, "Exec test passed all servers: #{succeeded.join(', ')}"
-        elsif !succeeded.empty? and !failed.empty?
+        elsif !succeeded.empty? && !failed.empty?
           @state.set_state WARNING, "Exec test passed on: #{succeeded.join(', ')}"
           @state.add_error_message "Exec test failed on #{failed.join(', ')}"
         elsif succeeded.empty?
