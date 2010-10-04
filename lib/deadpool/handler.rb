@@ -46,7 +46,7 @@ module Deadpool
 
         success = true
         @failover_protocols.each do |failover_protocol|
-          success = success and failover_protocol.initiate_failover_protocol!
+          success = success && failover_protocol.initiate_failover_protocol!
         end
 
         if success

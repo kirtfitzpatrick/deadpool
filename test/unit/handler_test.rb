@@ -36,20 +36,59 @@ class HandlerTest < Test::Unit::TestCase
   end
 
   def test_monitor_pool_with_normal_primary
-    monitor = @handler.instance_eval { @monitor }
-    monitor.expects(:primary_ok?).returns(true)
+    Deadpool::Monitor::Mock.any_instance.expects(:primary_ok?).returns(true)
 
     @handler.monitor_pool(MockTimer.new)
     assert_equal Deadpool::OK, @handler.state.status_code
     assert_equal 0, @handler.failure_count
+    assert !@handler.state.instance_eval { @locked }
   end
 
   def test_monitor_pool_with_failing_primary
-    monitor = @handler.instance_eval { @monitor }
-    monitor.expects(:primary_ok?).returns(false)
+    Deadpool::Monitor::Mock.any_instance.expects(:primary_ok?).returns(false)
 
     @handler.monitor_pool(MockTimer.new)
     assert_equal Deadpool::WARNING, @handler.state.status_code
     assert_equal 1, @handler.failure_count
+    assert !@handler.state.instance_eval { @locked }
   end
+
+  def test_monitor_pool_with_too_many_failures_and_successful_failover
+    Deadpool::Monitor::Mock.any_instance.expects(:primary_ok?).returns(false).twice
+    Deadpool::FailoverProtocol::Mock.any_instance.expects(:initiate_failover_protocol!).returns(true)
+
+    assert_equal 2, @handler.max_failed_checks
+
+    @handler.monitor_pool(MockTimer.new)
+    assert_equal Deadpool::WARNING, @handler.state.status_code
+    assert_equal 1, @handler.failure_count
+
+    @handler.monitor_pool(MockTimer.new)
+    assert_equal Deadpool::WARNING, @handler.state.status_code
+    assert_equal 2, @handler.failure_count
+
+    assert @handler.state.instance_eval { @locked }
+    assert @handler.state.error_messages.include?("Failover Protocol in place.")
+  end
+
+  def test_monitor_pool_with_too_many_failures_and_failed_failover
+    Deadpool::Monitor::Mock.any_instance.expects(:primary_ok?).returns(false).twice
+    Deadpool::FailoverProtocol::Mock.any_instance.expects(:"initiate_failover_protocol!").returns(false)
+    MockTimer.any_instance.expects(:cancel)
+
+    assert_equal 2, @handler.max_failed_checks
+
+    @handler.monitor_pool(MockTimer.new)
+    assert_equal Deadpool::WARNING, @handler.state.status_code
+    assert_equal 1, @handler.failure_count
+
+    @handler.monitor_pool(MockTimer.new)
+
+    assert_equal Deadpool::CRITICAL, @handler.state.status_code
+    assert_equal 2, @handler.failure_count
+
+    assert @handler.state.instance_eval { @locked }
+    assert @handler.state.error_messages.include?("Failover Protocol Failed!")
+  end
+
 end
