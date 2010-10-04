@@ -16,6 +16,8 @@ class HandlerTest < Test::Unit::TestCase
 
   def setup
     @config = {
+      :primary_host => "localhost",
+      :secondary_host => "127.0.0.1",
       :pool_name => "test.fake",
       :max_failed_checks => 2,
       :monitor_config => { :monitor_class => "Mock" },
@@ -98,6 +100,20 @@ class HandlerTest < Test::Unit::TestCase
 
     Deadpool::Monitor::Mock.any_instance.expects(:primary_ok?).returns(false)
     assert_equal Deadpool::WARNING, @handler.system_check.overall_status
+  end
+
+  def test_promote_server_with_no_host
+    assert !@handler.promote_server(nil)
+  end
+
+  def test_promote_server_with_failed_promotion
+    Deadpool::FailoverProtocol::Mock.any_instance.expects(:promote_to_primary).returns(false)
+    assert !@handler.promote_server(:secondary_host)
+  end
+
+  def test_promote_server_with_successful_promotion
+    Deadpool::FailoverProtocol::Mock.any_instance.expects(:promote_to_primary).returns(true)
+    assert @handler.promote_server(:secondary_host)
   end
 
 end
