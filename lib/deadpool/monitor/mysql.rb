@@ -1,3 +1,9 @@
+# Assumes at a minimum the following config:
+# --
+# primary_host:   '127.0.0.1'
+# secondary_host: '127.0.0.1'
+# monitor_config:
+#   nagios_plugin_path: '/usr/lib/nagios/plugins'
 
 module Deadpool
 
