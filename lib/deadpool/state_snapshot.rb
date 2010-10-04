@@ -19,27 +19,11 @@ module Deadpool
     end
 
     def overall_status
-      worst_status = @status_code
-
-      @children.each do |child|
-        child_status = child.overall_status
-
-        if child_status > worst_status
-          worst_status = child_status
-        end
-      end
-
-      return worst_status
+      @children.map { |c| c.overall_status }.push(@status_code).max
     end
 
     def all_error_messages
-      all_errors = @error_messages
-
-      @children.each do |child|
-        all_errors += child.all_error_messages
-      end
-
-      return all_errors
+      @children.inject(@error_messages) { |m,c| m + c.all_error_messages }
     end
 
     def nagios_report
@@ -61,11 +45,7 @@ module Deadpool
     end
 
     def to_s(indent=0)
-      indent_space = ''
-
-      indent.times do
-        indent_space += '  '
-      end
+      indent_space = '  ' * indent
 
       output = "#{indent_space}#{@name}\n"
       output += "#{indent_space}#{status_code_to_s(@status_code)} - checked #{(Time.now - @timestamp).round} seconds ago.\n"
@@ -86,14 +66,11 @@ module Deadpool
 
     def status_code_to_s(code)
       case code
-      when OK
-        return 'OK'
-      when WARNING
-        return 'WARNING'
-      when CRITICAL
-        return 'CRITICAL'
-      when UNKNOWN
-        return 'UNKNOWN'
+      when OK       then 'OK'
+      when WARNING  then 'WARNING'
+      when CRITICAL then 'CRITICAL'
+      else
+        'UNKNOWN'
       end
     end
 
