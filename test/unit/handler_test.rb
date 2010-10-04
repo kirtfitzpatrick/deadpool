@@ -7,6 +7,8 @@ class HandlerTest < Test::Unit::TestCase
   end
 
   class Deadpool::Monitor::Mock < Deadpool::Monitor::Base
+    def primary_ok?; true; end
+    def secondary_ok?; true; end
   end
 
   class Deadpool::FailoverProtocol::Mock < Deadpool::FailoverProtocol::Base
@@ -73,7 +75,7 @@ class HandlerTest < Test::Unit::TestCase
 
   def test_monitor_pool_with_too_many_failures_and_failed_failover
     Deadpool::Monitor::Mock.any_instance.expects(:primary_ok?).returns(false).twice
-    Deadpool::FailoverProtocol::Mock.any_instance.expects(:"initiate_failover_protocol!").returns(false)
+    Deadpool::FailoverProtocol::Mock.any_instance.expects(:initiate_failover_protocol!).returns(false)
     MockTimer.any_instance.expects(:cancel)
 
     assert_equal 2, @handler.max_failed_checks
@@ -89,6 +91,13 @@ class HandlerTest < Test::Unit::TestCase
 
     assert @handler.state.instance_eval { @locked }
     assert @handler.state.error_messages.include?("Failover Protocol Failed!")
+  end
+
+  def test_system_check_should_return_snapshot_of_state_monitor_and_failure_protocol_states
+    assert_equal Deadpool::OK, @handler.system_check.overall_status
+
+    Deadpool::Monitor::Mock.any_instance.expects(:primary_ok?).returns(false)
+    assert_equal Deadpool::WARNING, @handler.system_check.overall_status
   end
 
 end
