@@ -29,8 +29,9 @@ module Deadpool
   end
 
   module Monitor
-    autoload :Base,  'deadpool/monitor/base'
-    autoload :Mysql, 'deadpool/monitor/mysql'
+    autoload :Base,          'deadpool/monitor/base'
+    autoload :Mysql,         'deadpool/monitor/mysql'
+    autoload :GenericNagios, 'deadpool/monitor/generic_nagios'
   end
 
   module FailoverProtocol

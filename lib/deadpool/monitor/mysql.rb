@@ -3,7 +3,7 @@
 # primary_host:   '127.0.0.1'
 # secondary_host: '127.0.0.1'
 # monitor_config:
-#   nagios_plugin_path: '/usr/lib/nagios/plugins'
+#   nagios_plugin_path: '/usr/lib/nagios/plugins/check_mysql'
 
 module Deadpool
 
@@ -23,8 +23,7 @@ module Deadpool
       protected
 
       def check_mysql(host)
-        check_mysql_plugin = File.join nagios_plugins_path, 'check_mysql'
-        check_command      = "#{check_mysql_plugin} -H #{host} -u monitor -p 'M0n1t0r'"
+        check_command      = "#{nagios_plugin_path} -H #{host} -u '#{username}' -p '#{password}'"
         logger.debug check_command
         status_message     = `#{check_command}`
         exit_status        = $?
@@ -35,21 +34,27 @@ module Deadpool
       end
 
       def check_mysql_slave(host)
-        check_mysql_slave_plugin = File.join nagios_plugins_path, 'check_mysql'
-        check_command            = "#{check_mysql_slave_plugin} -H #{host} -u monitor -p 'M0n1t0r' --check-slave"
+        check_command  = "#{nagios_plugin_path} -H #{host} -u '#{username}' -p '#{password}' --check-slave"
         logger.debug check_command
-        status_message           = `#{check_command}`
-        exit_status              = $?
+        status_message = `#{check_command}`
+        exit_status    = $?
         logger.debug "MySQL Check Status Message: #{status_message}"
         logger.debug "MySQL Check Exit Status: #{exit_status}"
 
         return exit_status
       end
 
-      def nagios_plugins_path
-        config[:monitor_config][:nagios_plugin_path]
+      def nagios_plugin_path
+        @config[:monitor_config][:nagios_plugin_path]
       end
 
+      def username
+        @config[:monitor_config][:username]
+      end
+
+      def username
+        @config[:monitor_config][:password]
+      end
     end
 
   end
