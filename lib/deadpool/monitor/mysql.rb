@@ -12,12 +12,12 @@ module Deadpool
     class Mysql < Base
 
       def primary_ok?
-        check_mysql(@config[:primary_host])
+        return check_mysql(@config[:primary_host])
       end
 
       def secondary_ok?
-        check_mysql(@config[:secondary_host]) &&
-        check_mysql_slave(@config[:secondary_host])
+        return check_mysql(@config[:secondary_host]) 
+        # && check_mysql_slave(@config[:secondary_host])
       end
 
       protected
@@ -41,7 +41,7 @@ module Deadpool
         logger.debug "MySQL Check Status Message: #{status_message}"
         logger.debug "MySQL Check Exit Status: #{exit_status}"
 
-        return exit_status
+        return exit_status == 0
       end
 
       def nagios_plugin_path
@@ -52,7 +52,7 @@ module Deadpool
         @config[:monitor_config][:username]
       end
 
-      def username
+      def password
         @config[:monitor_config][:password]
       end
     end

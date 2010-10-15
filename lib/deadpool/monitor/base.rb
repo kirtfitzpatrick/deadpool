@@ -27,15 +27,20 @@ module Deadpool
       protected
 
       def update_state
-        args = case [ primary_ok?, secondary_ok? ]
+        primary_okay, secondary_okay = primary_ok?, secondary_ok?
+        logger.debug "PrimaryOkay? #{primary_okay}, SecondaryOkay? #{secondary_okay}"
+
+        args = case [ primary_okay, secondary_okay ]
         when [true, true]
           [ OK, "Primary and Secondary are up." ]
         when [false, true]
           [ WARNING, "Primary is down. Secondary is up." ]
         when [true, false]
           [ WARNING, "Primary is up. Secondary is down." ]
-        else
+        when [false, false]
           [ CRITICAL, "Primary and Secondary are down." ]
+        else
+          [ CRITICAL, "Implementation Error." ]
         end
 
         self.state.set_state(*args)
