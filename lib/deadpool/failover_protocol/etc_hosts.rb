@@ -134,9 +134,9 @@ module Deadpool
       protected
 
       def run_script_command(host, command_arguments)
-        options     = @password.nil? ? {} : {:password => @password}
-        command     = "#{@script_path} #{command_arguments}"
-        command     = "#{@sudo_path} #{command}" if @use_sudo
+        options = @password.nil? ? {} : {:password => @password}
+        command = "#{@script_path} #{command_arguments}"
+        command = "#{@sudo_path} #{command}" if @use_sudo
 
         logger.debug "executing #{command} on #{host}"
 

@@ -1,3 +1,4 @@
+require 'net/ssh'
 
 module Deadpool
 
@@ -57,9 +58,9 @@ module Deadpool
         # Collect check data
         @client_hosts.each do |client_host|
           if test_client(client_host)
-            failed << client_host
-          else
             succeeded << client_host
+          else
+            failed << client_host
           end
         end
 
@@ -86,13 +87,14 @@ module Deadpool
         logger.debug "executing #{command} on #{host}"
 
         begin
+          output = 0
           Net::SSH.start(host, @username, options) do |ssh|
             output = ssh.exec!(command)
           end
 
-          return output =~ /ExecRemoteCommand.success: 0/
+          return (output =~ /ExecRemoteCommand.success: 0/)
         rescue
-          logger.error "Couldn't execute #{command} on #{host}"
+          logger.error "Couldn't execute #{command} on #{host} with Username: #{@username} and options: #{options.inspect}"
           return false
         end
       end
