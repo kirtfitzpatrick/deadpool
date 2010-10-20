@@ -81,7 +81,7 @@ module Deadpool
 
       def exec_remote_command(command, host)
         options = @password.nil? ? {} : {:password => @password}
-        command = "#{command} && echo 'ExecRemoteCommand.success: '$?"
+        command = "#{command} ; echo 'ExecRemoteCommand.success: '$?"
         command = "#{@sudo_path} #{command}" if @use_sudo
 
         logger.debug "executing #{command} on #{host}"

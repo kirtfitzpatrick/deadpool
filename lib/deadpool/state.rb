@@ -7,8 +7,11 @@ module Deadpool
     
     attr_reader :name, :timestamp, :status_code, :error_messages, :all_messages
     
-    def initialize(name)
-      @name   = name
+    def initialize(name, klass='')
+      names = []
+      names << name unless (name.nil? and name.blank?)
+      names << klass.to_s unless (klass.nil? and klass.blank?)
+      @name = names.join " - "
       @locked = false
       reset!
     end

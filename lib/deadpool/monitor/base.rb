@@ -3,8 +3,8 @@ module Deadpool
     class Base
       attr_accessor :logger
 
-      def initialize(config, logger)
-        @config, @logger = config, logger
+      def initialize(config, monitor_config, logger)
+        @config, @monitor_config, @logger = config, monitor_config, logger
       end
 
       def primary_ok?
@@ -21,7 +21,7 @@ module Deadpool
       end
 
       def state
-        @state ||= State.new(deadpool_state_name)
+        @state ||= Deadpool::State.new name, self.class
       end
 
       protected
@@ -50,8 +50,8 @@ module Deadpool
         StateSnapshot.new(self.state)
       end
 
-      def deadpool_state_name
-        "%s - %s" % [ self.class.name, @config[:pool_name] ]
+      def name
+        @monitor_config[:name].nil? ? '' : @monitor_config[:name]
       end
     end
   end

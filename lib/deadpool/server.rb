@@ -12,7 +12,7 @@ module Deadpool
 
     def initialize(argv)
       @options = parse_options(argv)
-      @state   = Deadpool::State.new 'Deadpool::Server'
+      @state   = Deadpool::State.new self.class.to_s
       @config  = Deadpool::Helper.configure(@options)
       @logger  = Deadpool::Helper.setup_logger(@config)
 

@@ -14,7 +14,8 @@ module Deadpool
         :secondary_host
 
     def initialize(config, logger)
-      @state             = Deadpool::State.new "Deadpool::Handler - #{config[:pool_name]}"
+      @state             = Deadpool::State.new config[:pool_name], self.class
+      # @state             = Deadpool::State.new "Deadpool::Handler - #{config[:pool_name]}"
       @config            = config
       @logger            = logger
       @pool_name         = config[:pool_name]
@@ -83,7 +84,7 @@ module Deadpool
 
     def instantiate_monitor
       monitor_class = Deadpool::Monitor.const_get(@config[:monitor_config][:monitor_class])
-      @monitor      = monitor_class.new(@config, logger)
+      @monitor      = monitor_class.new(@config, @config[:monitor_config], logger)
     end
 
     def instantiate_failover_protocols
