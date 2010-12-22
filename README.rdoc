@@ -155,6 +155,66 @@ comes back online. That just sounds way too risky.
 
 
 
+= Configuration
+
+# /etc/deadpool/config/pools/example.yml
+
+pool_name: 'production_database'
+check_interval: 3
+max_failed_checks: 10
+primary_host:   10.x.x.x
+secondary_host: 10.x.x.x
+
+monitor_config:
+  monitor_class: Mysql
+  name: 'Database Monitor'
+  nagios_plugin_path: '/usr/lib/nagios/plugins/check_mysql'
+  username: 'db_admin'
+  password: 'passwerd'
+
+failover_protocol_configs:
+  - protocol_class: EtcHosts
+    name: 'Change Hosts'
+    script_path: '/opt/deadpool/bin/etc_hosts_switch'
+    service_host_name: 'super.important.database.that.must.never.go.down'
+    username: 'ssh_admin'
+    password: 'passwerd'
+    use_sudo: 1
+    client_hosts:
+      - '10.x.x.x' # app1
+      - '10.x.x.x' # app2
+      - '10.x.x.x' # app3
+      - '10.x.x.x' # app4
+      - '10.x.x.x' # app5
+      - '10.x.x.x' # app6
+      - '10.x.x.x' # app7
+      - '10.x.x.x' # redis2/jobserver
+
+  - protocol_class: ExecRemoteCommand
+    name: 'Restart Nginx'
+    test_command: '/etc/init.d/nginx status'
+    exec_command: '/etc/init.d/nginx restart'
+    username: 'ssh_admin'
+    password: 'passwerd'
+    client_hosts:
+      - '10.x.x.x' # app1
+      - '10.x.x.x' # app2
+      - '10.x.x.x' # app3
+      - '10.x.x.x' # app4
+      - '10.x.x.x' # app5
+      - '10.x.x.x' # app6
+      - '10.x.x.x' # app7
+
+  - protocol_class: ExecRemoteCommand
+    name: 'Restart Job Service'
+    test_command: '/etc/init.d/monit test'
+    exec_command: '/etc/init.d/monit restart'
+    username: 'ssh_admin'
+    password: 'passwerd'
+    use_sudo: 1
+    client_hosts:
+      - '10.x.x.x' # redis2/jobserver
+
 
 
 

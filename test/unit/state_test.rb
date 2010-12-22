@@ -2,11 +2,11 @@ require 'test/test_helper'
 
 class StateTest < Test::Unit::TestCase
   def setup
-    @state = Deadpool::State.new "Test"
+    @state = Deadpool::State.new "Test", StateTest
   end
 
   def test_should_initialize_with_clean_state
-    assert_equal "Test", @state.name
+    assert_equal "Test - StateTest", @state.name
     assert_equal Deadpool::OK, @state.status_code
     assert_equal [], @state.error_messages
     assert_equal [], @state.all_messages
