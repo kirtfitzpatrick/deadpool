@@ -1,81 +1,46 @@
-= Under Construction
-
-We are currently using this but are in the process of cleaning it up to
-release it to the public. It should be ready in a week or two.
-
-
 = Motivation
 
-We are restricted in our team that we don't always get to chose the hosting
-provider and each project always has different requirements. The failover
-systems out there seem to ask "set your system up like this and then you can
-use this failover solution." We don't always have that luxury but we'll still
-be responsible if something goes down. So we wrote this to adapt to the
-various systems we have. It can do a failover in a manner that would be
-considered a best practice, or it can do a failover in a more hacky method
-because that's your only option. And if there are any additional tasks that
-you need done before or after a failover, it can do those too. And the whole
-thing can report to Nagios.
-
+We needed a way to provide automated failover on various systems 
+where we don't have access to virtual IPs.
 
 = Goals
 
-* Failover via /etc/hosts, VIP, or someother means we haven't thought of yet.
-* Restart applications of various forms (Rails apps, job server).
+* Failover via /etc/hosts.
+* Perform ANY auxiliary duties necessary for a successful failover. (restart job servers, web servers, hang maintenance page, etc..)
+* Monitor the status of the entire failover system and report to Nagios.
 * Perform or reset the failover manually from the command line.
-* Mix and match monitoring and failover plugins.
-* Monitor things well enough that it will know if something changed in the system that would prevent it from doing it's job.
-* Accurately report system status to Nagios.
-* Provide a full system status breakdown much like MogileFS does via the command line.
-
 
 = Overview
 
 == Plugin Architecture
 
-Since there are guaranteed to be edge cases that hundreds of developers have
-that I don't have, this has a straight-forward mechanism to develop plugins
-and drop them in a config directory and use them right along side the built in
-stuff.
+Since there are guaranteed to be edge cases this has a straight-forward 
+mechanism to develop plugins and drop them in a config directory and 
+use them right along side the built in stuff.  Examples are created 
+for you by the deadpool_generator command.
 
-Suppose you're have a job server or a search server that doesn't work with the
-existing monitor. You could write a simple monitor for it, specify it in the
-pool config and use the existing Failover Protocols to perform the failover.
-If there is some special task that you need done that the existing failover
-protocols don't support you can write your own in the same manner as the
-monitor. Examples for these are created for you by the
-deadpool_generate_config command.
 
 == Chainable Failover Protocols
 
-Chainable failover protocols means you can take two or more Failover Protocols
-and have them execute in succession in the event of a failover. For example,
-hang maintenance page, shutdown job server, wait for replication to catch up,
-preform the switch, restart the web servers, start the job server, remove the
-maintenance page.
+Chainable failover protocols means you can take any number of FailoverProtocols
+and have them execute in succession in the event of a failover.  Such as 
+restarting nginx after making a change to /etc/hosts.
 
 
 == Multiple Services
 
 Multiple services (ex. mysql_development, mysql_staging, redis) can be
 configured under a single instance and multiple instances can be configured to
-run on a single box. We did this so you could run your staging and production
-deadpool servers on the same box without having to use the same versions of
-either deadpool or your custom plugins. Ergo you can develop in house plugins
-and deploy them to staging on the monitoring server without risking
-production.
+run on a single box.
 
 
 == Monitoring
 
 There are lots of moving parts. Since a failover system is worthless if you
-don't know when it's down or when something has changed that would prevent it
-from working the first design decision was that the whole system had to be
-able to test it's status and report it. Probably half the code in this gem is
-just to monitor itself. Deadpool can test each link in the chain and report
-when something is out of place. Meaning it tests more than MySQL, it tests
-that all the app servers are pointing at the correct database and that it has
-write permission on the file it would have to change and such.
+don't know when it's down deadpool can test each point in the system and report
+when something is out of place.  Meaning it tests more than MySQL, it tests
+that all the app servers are pointing at the correct MySQL server and that it has
+write permission on /etc/hosts and so on.
 
 
     $ deadpool_admin --nagios_report
@@ -129,30 +94,32 @@ write permission on the file it would have to change and such.
 == How it works
 
 It periodically checks that the primary is okay at an interval of your
-choosing. When the primary check has failed enough times in a row to exceed a
-threshold of your choosing it will execute the failover protocol. The failover
+choosing. When the primary check has failed enough times in a row to exceed
+your threshold it will execute the failover protocol. The failover
 protocol is just a list of failover protocols in order. Generally each one
 will perform a preflight check first. As each one finishes the failover it
 records it's state and success or failure. Once it's all done, deadpool locks
 the state so an admin can see what happened and if there were any issues along
 the way.
 
-Deadpool is a single use tool. Once it's failed over, it's done. It can
-perform a manual promotion from the command line but it will have to be
-restarted to work again. It does not attempt to fail back over if the primary
-comes back online. That just sounds way too risky.
+Currently deadpool is a single bullet gun. Once it's failed over, it's done. 
+It can perform a manual promotion from the command line but it will have to be
+restarted to work again.  This may change in a future release.
 
 
+= Installation
 
-
-= Installing/Setup
-
+== Server
     $ gem install deadpool
-    $ deadpool_generate_config --path=/etc/deadpool
+    $ sudo deadpool_generator --configuration
+    $ sudo deadpool_generator --upstart_init
 
-
-== /etc/hosts method
-
+== Client
+    $ gem install deadpool
+    $ sudo adduser deadpool
+    $ sudo chgrp deadpool /etc/hosts
+    $ sudo chmod 664 /etc/hosts
+    $ which deadpool_hosts
 
 
 = Configuration
@@ -175,9 +142,9 @@ monitor_config:
 failover_protocol_configs:
   - protocol_class: EtcHosts
     name: 'Change Hosts'
-    script_path: '/opt/deadpool/bin/etc_hosts_switch'
+    script_path: '/usr/local/bin/deadpool_hosts'
     service_host_name: 'super.important.database.that.must.never.go.down'
-    username: 'ssh_admin'
+    username: 'deadpool'
     password: 'passwerd'
     use_sudo: 1
     client_hosts:
@@ -194,7 +161,7 @@ failover_protocol_configs:
     name: 'Restart Nginx'
     test_command: '/etc/init.d/nginx status'
     exec_command: '/etc/init.d/nginx restart'
-    username: 'ssh_admin'
+    username: 'deadpool'
     password: 'passwerd'
     client_hosts:
       - '10.x.x.x' # app1
@@ -209,7 +176,7 @@ failover_protocol_configs:
     name: 'Restart Job Service'
     test_command: '/etc/init.d/monit test'
     exec_command: '/etc/init.d/monit restart'
-    username: 'ssh_admin'
+    username: 'deadpool'
     password: 'passwerd'
     use_sudo: 1
     client_hosts:

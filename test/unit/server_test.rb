@@ -18,10 +18,11 @@ class ServerTest < Test::Unit::TestCase
   protected
 
   def with_server
-    configdir = File.expand_path('../../fixtures', __FILE__)
+    config_path = File.expand_path('../../fixtures', __FILE__)
 
     EM.run do
-      @server = Deadpool::Server.new(["--configdir=#{configdir}"])
+      @server = Deadpool::Server.new(:config_path => config_path)
+      @server.run false
       yield
       EM.stop
     end

@@ -14,11 +14,11 @@ module Deadpool
 
     def parse_command_line(argv)
       options             = {}
-      options[:configdir] = '/etc/deadpool'
+      options[:config_path] = '/etc/deadpool'
       options[:daemonize] = nil
 
       @option_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: etc_hosts_switch {help|full_report|nagios_report} [options]"
+        opts.banner = "Usage: deadpool_hosts {help|full_report|nagios_report} [options]"
 
         opts.separator "Commands:"
         opts.on("-h", "--help", "Print this help message.") do |help|
@@ -30,9 +30,9 @@ module Deadpool
         end
 
         opts.separator "Options:"
-        opts.on("--configdir=PATH", String,
-            "Path to configs and custom plugins. #{options[:configdir]} by default.") do |configdir|
-          options[:configdir] = configdir
+        opts.on("--config_path=PATH", String,
+            "Path to configs and custom plugins. #{options[:config_path]} by default.") do |config_path|
+          options[:config_path] = config_path
         end
       end
 
@@ -53,8 +53,8 @@ module Deadpool
       exit 4
     end
 
-    def configdir
-      return @options[:configdir]
+    def config_path
+      return @options[:config_path]
     end
 
   end

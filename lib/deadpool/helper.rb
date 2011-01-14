@@ -21,7 +21,7 @@ module Deadpool
 
     def self.configure(options)
       default_config = YAML.load(File.read(File.join(File.dirname(__FILE__), '../../config/default_environment.yml')))
-      user_config    = YAML.load(File.read(File.join(options[:configdir], 'config/environment.yml')))
+      user_config    = YAML.load(File.read(File.join(options[:config_path], 'config/environment.yml')))
       config         = Deadpool::Helper.symbolize_keys default_config.merge(user_config).merge(options)
 
       return config

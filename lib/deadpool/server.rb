@@ -4,34 +4,48 @@ module Deadpool
 
   class Server
 
-    include Deadpool::Options
+    # include Deadpool::Options
     include Deadpool::Daemonizer
 
     attr_accessor :logger
     attr_reader :config
 
-    def initialize(argv)
-      @options = parse_options(argv)
+    def initialize(options)
+      @options = options
       @state   = Deadpool::State.new self.class.to_s
       @config  = Deadpool::Helper.configure(@options)
       @logger  = Deadpool::Helper.setup_logger(@config)
 
-      if @options[:daemonize]
-        options = @options[:pid_file].nil? ? {} : {:pid => @options[:pid_file]}
-        self.daemonize options
-      end
+      # if @options[:daemonize]
+      #   options = @options[:pid_file].nil? ? {} : {:pid => @options[:pid_file]}
+      #   self.daemonize options
+      # end
+      # 
+      # load_handlers
+      # start_deadpool_handlers
+      # start_command_server
+      # schedule_system_check
+    end
 
-      load_handlers
-      start_deadpool_handlers
-      start_command_server
-      schedule_system_check
+    def run(daemonize)
+      EventMachine::run {
+        if daemonize
+          options = @options[:pid_file].nil? ? {} : {:pid => @options[:pid_file]}
+          self.daemonize options
+        end
+      
+        load_handlers
+        start_deadpool_handlers
+        start_command_server
+        schedule_system_check
+      }
     end
 
     def load_handlers
       @handlers = {}
       @state.set_state(OK, 'Loading Handlers.')
 
-      Dir[@options[:configdir] + '/config/pools/*.yml'].each do |pool_yml|
+      Dir[@options[:config_path] + '/config/pools/*.yml'].each do |pool_yml|
         pool_config = Deadpool::Helper.symbolize_keys YAML.load(File.read(pool_yml))
         @handlers[pool_config[:pool_name]] = Deadpool::Handler.new(pool_config, logger)
       end

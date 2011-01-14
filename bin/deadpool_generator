@@ -4,6 +4,5 @@ require 'rubygems'
 
 require File.join(File.dirname(File.dirname(__FILE__)), 'lib', 'deadpool')
 
-EventMachine::run {
-  Deadpool::Server.new(ARGV)
-}
+Deadpool::Generator.new(ARGV).run
+

@@ -6,7 +6,7 @@ secondary_host: 0.0.0.2
 
 failover_protocol_configs:
   - protocol_class: EtcHosts
-    script_path: './bin/etc_hosts_switch'
+    script_path: './bin/deadpool_hosts'
     service_host_name: 'test_host_name'
     username: 'deadpool'
     password: 'pswd'

@@ -8,7 +8,7 @@ require 'json'
 
 module Deadpool
 
-  class Admin
+  class CommandLineServer
 
     def initialize(argv)
       @argv     = argv
@@ -27,7 +27,7 @@ module Deadpool
       options[:config_path]     = '/etc/deadpool'
 
       @option_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: deadpool_hosts --command [options]"
+        opts.banner = "Usage: deadpool_hosts {help|full_report|nagios_report} [options]"
 
         opts.separator "Commands:"
         opts.on("-h", "--help", "Print this help message.") do |help|
@@ -49,14 +49,6 @@ module Deadpool
         opts.on("--stop", "Stop the server.") do |stop|
           options[:command_count] += 1
           options[:command]        = :stop
-        end
-        opts.on("--start", "Start the server in the background.") do |stop|
-          options[:command_count] += 1
-          options[:command]        = :start
-        end
-        opts.on("--foreground", "Start the server in the foreground.") do |stop|
-          options[:command_count] += 1
-          options[:command]        = :foreground
         end
 
         opts.separator "Options:"
@@ -97,10 +89,6 @@ module Deadpool
         promote_server options
       when :stop
         stop options
-      when :start
-        start options
-      when :foreground
-        foreground options
       else
         help
       end
@@ -120,22 +108,18 @@ module Deadpool
 
     def nagios_report(options)
       response = send_command_to_deadpool_server :command => 'nagios_report'
+      puts response
 
       if (response.to_s =~ /^OK/) != nil
-        puts response.to_s
-        exit OK
+        exit 0
       elsif (response.to_s =~ /^WARNING/) != nil
-        puts response.to_s
-        exit WARNING
+        exit 1
       elsif (response.to_s =~ /^CRITICAL/) != nil
-        puts response.to_s
-        exit CRITICAL
+        exit 2
       elsif (response.to_s =~ /^UNKNOWN/) != nil
-        puts response.to_s
-        exit UNKNOWN
+        exit 3
       else
-        puts "UNKNOWN - #{response.to_s}"
-        exit UNKNOWN
+        exit 4
       end
     end
 
@@ -161,22 +145,9 @@ module Deadpool
       puts send_command_to_deadpool_server :command => 'stop'
     end
 
-    def start(options)
-      puts Deadpool::Server.new(options).run(true)
-    end
-
-    def foreground(options)
-      puts Deadpool::Server.new(options).run(false)
-    end
-
     def send_command_to_deadpool_server(options)
       output = ''
-
-      begin
-        socket = TCPSocket.open(@config[:admin_hostname], @config[:admin_port])
-      rescue
-        return "Couldn't connect to deadpool server.  Is it running?"
-      end
+      socket = TCPSocket.open(@config[:admin_hostname], @config[:admin_port])
 
       if socket
         socket.puts JSON.dump(options)
@@ -185,7 +156,8 @@ module Deadpool
         end
         socket.close
       else
-        return "Couldn't connect to deadpool server."
+        puts "Couldn't connect to deadpool server."
+        exit 4
       end
 
       return output

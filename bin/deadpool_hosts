@@ -4,7 +4,7 @@ require 'optparse'
 require 'ostruct'
 require 'strscan'
 
-class EtcHostsSwitch
+class DeadpoolHosts
 
   def run
     @options = self.parse_command_line
@@ -16,7 +16,7 @@ class EtcHostsSwitch
     options.command_count = 0
 
     @option_parser = OptionParser.new do |opts|
-      opts.banner = "Usage: etc_hosts_switch {help|test|verify|switch} [options]"
+      opts.banner = "Usage: deadpool_hosts {help|test|verify|switch} [options]"
 
       opts.separator "Commands:"
       opts.on("-h", "--help", "Print this help message.") do |h|
@@ -209,7 +209,7 @@ class EtcHostsSwitch
 
 end
 
-EtcHostsSwitch.new.run
+DeadpoolHosts.new.run
 
 __END__
 127.0.0.1           localhost localhost.localdomain

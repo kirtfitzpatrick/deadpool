@@ -19,7 +19,7 @@ monitor_config:
 # of the configuration is specific to the failover protocol.
 failover_protocol_configs:
   - protocol_class: EtcHosts
-    script_path: 'etc_hosts_switch'
+    script_path: 'deadpool_hosts'
     service_host_name: 'master.mysql.example.project.client'
     username: ''
     password: ''
