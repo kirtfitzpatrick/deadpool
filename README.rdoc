@@ -14,9 +14,8 @@ where we don't have access to virtual IPs.
 
 == Plugin Architecture
 
-Since there are guaranteed to be edge cases this has a straight-forward 
-mechanism to develop plugins and drop them in a config directory and 
-use them right along side the built in stuff.  Examples are created 
+Since there are guaranteed to be edge cases deadpool was designed to utilize
+additional custom plugins from the config directory.  Examples are created 
 for you by the deadpool_generator command.
 
 
@@ -53,42 +52,22 @@ write permission on /etc/hosts and so on.
     Deadpool::Server
     OK - checked 2 seconds ago.
 
-      Deadpool::Handler - staging_database
+      Deadpool::Handler - prodution_database
       OK - checked 3 seconds ago.
       Primary Check OK.
 
-        Deadpool::Monitor::Mysql - staging_database
+        Deadpool::Monitor::Mysql - prodution_database
         OK - checked 2 seconds ago.
         Primary and Secondary are up.
 
-        Deadpool::FailoverProtocol::EtcHosts - staging_database
+        Deadpool::FailoverProtocol::EtcHosts - prodution_database
         OK - checked 2 seconds ago.
         Write check passed all servers: 10.1.2.3, 10.1.2.4
         All client hosts are pointed at the primary.
 
-        Deadpool::FailoverProtocol::ExecRemoteCommand - staging_database
+        Deadpool::FailoverProtocol::ExecRemoteCommand - prodution_database
         OK - checked 1 seconds ago.
         Exec test passed all servers: 10.1.2.3, 10.1.2.4
-
-      Deadpool::Handler - dev_database
-      OK - checked 3 seconds ago.
-      Primary Check OK.
-
-        Deadpool::Monitor::Mysql - dev_database
-        OK - checked 1 seconds ago.
-        Primary and Secondary are up.
-
-        Deadpool::FailoverProtocol::EtcHosts - dev_database
-        OK - checked 0 seconds ago.
-        Write check passed all servers: 10.1.2.3, 10.1.2.4
-        All client hosts are pointed at the primary.
-
-        Deadpool::FailoverProtocol::ExecRemoteCommand - dev_database
-        OK - checked 0 seconds ago.
-        Exec test passed all servers: 10.1.2.3, 10.1.2.4
-
-
-
 
 
 == How it works
@@ -124,63 +103,55 @@ restarted to work again.  This may change in a future release.
 
 = Configuration
 
-# /etc/deadpool/config/pools/example.yml
+  pool_name: 'production_database'
+  check_interval: 3
+  max_failed_checks: 10
+  primary_host:   10.x.x.x
+  secondary_host: 10.x.x.x
 
-pool_name: 'production_database'
-check_interval: 3
-max_failed_checks: 10
-primary_host:   10.x.x.x
-secondary_host: 10.x.x.x
-
-monitor_config:
-  monitor_class: Mysql
-  name: 'Database Monitor'
-  nagios_plugin_path: '/usr/lib/nagios/plugins/check_mysql'
-  username: 'db_admin'
-  password: 'passwerd'
-
-failover_protocol_configs:
-  - protocol_class: EtcHosts
-    name: 'Change Hosts'
-    script_path: '/usr/local/bin/deadpool_hosts'
-    service_host_name: 'super.important.database.that.must.never.go.down'
-    username: 'deadpool'
+  monitor_config:
+    monitor_class: Mysql
+    name: 'Database Monitor'
+    nagios_plugin_path: '/usr/lib/nagios/plugins/check_mysql'
+    username: 'db_admin'
     password: 'passwerd'
-    use_sudo: 1
-    client_hosts:
-      - '10.x.x.x' # app1
-      - '10.x.x.x' # app2
-      - '10.x.x.x' # app3
-      - '10.x.x.x' # app4
-      - '10.x.x.x' # app5
-      - '10.x.x.x' # app6
-      - '10.x.x.x' # app7
-      - '10.x.x.x' # redis2/jobserver
 
-  - protocol_class: ExecRemoteCommand
-    name: 'Restart Nginx'
-    test_command: '/etc/init.d/nginx status'
-    exec_command: '/etc/init.d/nginx restart'
-    username: 'deadpool'
-    password: 'passwerd'
-    client_hosts:
-      - '10.x.x.x' # app1
-      - '10.x.x.x' # app2
-      - '10.x.x.x' # app3
-      - '10.x.x.x' # app4
-      - '10.x.x.x' # app5
-      - '10.x.x.x' # app6
-      - '10.x.x.x' # app7
+  failover_protocol_configs:
+    - protocol_class: EtcHosts
+      name: 'Change Hosts'
+      script_path: '/usr/local/bin/deadpool_hosts'
+      service_host_name: 'super.important.database.that.must.never.go.down'
+      username: 'deadpool'
+      password: 'passwerd'
+      use_sudo: 1
+      client_hosts:
+        - '10.x.x.x' # app1
+        - '10.x.x.x' # app2
+        - '10.x.x.x' # app3
+        - '10.x.x.x' # app4
+        - '10.x.x.x' # jobserver
 
-  - protocol_class: ExecRemoteCommand
-    name: 'Restart Job Service'
-    test_command: '/etc/init.d/monit test'
-    exec_command: '/etc/init.d/monit restart'
-    username: 'deadpool'
-    password: 'passwerd'
-    use_sudo: 1
-    client_hosts:
-      - '10.x.x.x' # redis2/jobserver
+    - protocol_class: ExecRemoteCommand
+      name: 'Restart Nginx'
+      test_command: '/etc/init.d/nginx status'
+      exec_command: '/etc/init.d/nginx restart'
+      username: 'deadpool'
+      password: 'passwerd'
+      client_hosts:
+        - '10.x.x.x' # app1
+        - '10.x.x.x' # app2
+        - '10.x.x.x' # app3
+        - '10.x.x.x' # app4
+
+    - protocol_class: ExecRemoteCommand
+      name: 'Restart Job Service'
+      test_command: '/etc/init.d/monit test'
+      exec_command: '/etc/init.d/monit restart'
+      username: 'deadpool'
+      password: 'passwerd'
+      use_sudo: 1
+      client_hosts:
+        - '10.x.x.x' # jobserver
 
 
 
