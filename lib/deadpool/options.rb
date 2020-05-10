@@ -18,7 +18,7 @@ module Deadpool
       options[:daemonize] = nil
 
       @option_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: deadpool_hosts {help|full_report|nagios_report} [options]"
+        opts.banner = "Usage: deadpool-hosts {help|full_report|nagios_report} [options]"
 
         opts.separator "Commands:"
         opts.on("-h", "--help", "Print this help message.") do |help|

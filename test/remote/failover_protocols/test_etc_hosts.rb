@@ -7,7 +7,7 @@ class TestDeadpoolFailoverProtocolEtcHosts < Test::Unit::TestCase
     config_file                     = File.join(app_root, 'test', 'fixtures/etc_hosts.yml')
     @config                         = YAML.load(File.read(config_file))
     @failover_config                = @config['failover_protocol_configs'].first
-    @failover_config['script_path'] = File.join(app_root, 'bin', 'deadpool_hosts')
+    @failover_config['script_path'] = File.join(app_root, 'bin', 'deadpool-hosts')
     @logger                         = Logger.new(STDOUT)
     @logger.level                   = Logger::DEBUG
     @etc_hosts                      = Deadpool::FailoverProtocol::EtcHosts.new @config, @failover_config, @logger

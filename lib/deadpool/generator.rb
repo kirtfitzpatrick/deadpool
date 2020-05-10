@@ -28,18 +28,18 @@ module Deadpool
       options[:upstart_script_path] = '/lib/init/upstart-job'
 
       @option_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: deadpool_generator command [options]"
+        opts.banner = "Usage: deadpool-generator command [options]"
 
         opts.separator "Commands:"
         opts.on("-h", "--help", "Print this help message.") do |help|
           options[:command_count] += 1
           options[:command]        = :help
         end
-        opts.on("--upstart_init", "Generate and upstart config.") do |upstart|
+        opts.on("-u", "--upstart_init", "Generate and upstart config.") do |upstart|
           options[:command_count] += 1
           options[:command]        = :upstart_init
         end
-        opts.on("--configuration", "Generate a config directory structure and example files.") do |configuration|
+        opts.on("-c", "--configuration", "Generate a config directory structure and example files.") do |configuration|
           options[:command_count] += 1
           options[:command]        = :configuration
         end
@@ -103,7 +103,7 @@ module Deadpool
       upstart_script_path = options[:upstart_script_path]
       config_params       = config_path.nil? ? '' : "--config_path=#{config_path}"
       ruby_path           = `which ruby`.strip
-      deadpool_admin_path = `which deadpool_admin`.strip
+      deadpool-admin_path = `which deadpool-admin`.strip
       
       upstart_conf =<<-EOF
 description     "Deadpool Service"
@@ -113,7 +113,7 @@ umask 007
 start on (net-device-up and local-filesystems)
 stop on runlevel [016]
 respawn
-exec #{ruby_path} #{deadpool_admin_path} --foreground #{config_params}
+exec #{ruby_path} #{deadpool-admin_path} --foreground #{config_params}
 
       EOF
 
@@ -147,7 +147,7 @@ exec #{ruby_path} #{deadpool_admin_path} --foreground #{config_params}
     # mkdir path/lib/deadpool/failover_protocol
     #       path/lib/deadpool/failover_protocol
     def generate_configuration(options)
-      path = config_path
+      path = options[:config_path]
       FileUtils.mkdir_p(File.join(path, 'config/pools'))
       FileUtils.mkdir_p(File.join(path, 'lib/deadpool/monitor'))
       FileUtils.mkdir_p(File.join(path, 'lib/deadpool/failover_protocol'))
@@ -197,14 +197,14 @@ failover_protocol_configs:
       
       environment_config_path = File.join(path, 'config/environment.yml')
       environment_conf = <<-EOF
-# log_path: '/var/log/deadpool.log'
-# log_level: INFO
-# system_check_interval: 30
-# admin_hostname: 'localhost'
-# admin_port: 5507
+log_path: '/var/log/deadpool.log'
+log_level: INFO
+system_check_interval: 30
+admin_hostname: 'localhost'
+admin_port: 5507
 
       EOF
-      if File.exists? enironment_config_path
+      if File.exists? environment_config_path
         puts "#{environment_config_path} already exists.  Here's what we would have copied there."
         puts environment_conf
       else
@@ -213,6 +213,7 @@ failover_protocol_configs:
         end
       end
       
+      puts "Configuration saved to #{path}"
     end
 
   end

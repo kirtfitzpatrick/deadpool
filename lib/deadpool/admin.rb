@@ -27,7 +27,7 @@ module Deadpool
       options[:config_path]     = '/etc/deadpool'
 
       @option_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: deadpool_hosts --command [options]"
+        opts.banner = "Usage: deadpool-hosts --command [options]"
 
         opts.separator "Commands:"
         opts.on("-h", "--help", "Print this help message.") do |help|

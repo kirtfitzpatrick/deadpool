@@ -1,28 +1,28 @@
-
-Gem::Specification.new do |s|
-  s.name        = 'deadpool'
-  s.version     = '0.1.3'
-  s.summary     = 'Non VIP based failover service for MySQL and others in the cloud.'
-  s.description = <<-EOF
-    Non VIP based failover service for MySQL and others in the cloud.
-    Nagios monitoring built in.
-    Designed to let you add custom monitoring and failover plugins.
+Gem::Specification.new do |spec|
+  spec.name        = 'deadpool'
+  spec.version     = '0.1.3'
+  spec.summary     = '/etc/hosts based failover system w/monitoring'
+  spec.description = <<-EOF
+/etc/hosts based failover system w/monitoring. Nagios compatible monitoring 
+built in. Also generic enough to handle failover and monitoring for just about 
+anything that can be exec'd through ssh.
+  EOF
+  spec.post_install_message = <<-EOF
+Desparate times call for desparate measures. To get started run:
+$ deadpool-generator --help
   EOF
 
-  s.required_ruby_version = '>= 1.8.6'
+  spec.author                = 'Kirt Fitzpatrick'
+  spec.homepage              = 'https://github.com/kirtfitzpatrick/deadpool'
+  spec.license               = 'MIT'
+  spec.required_ruby_version = '>= 2.7.0'
 
-  s.author      = 'Kirt Fitzpatrick'
-  s.email       = 'kirt.fitzpatrick@akqa.com'
-
-  s.bindir      = 'bin'
-  s.executables = ['deadpool_admin', 'deadpool_generator', 'deadpool_hosts']
-
-  s.files        = Dir['README', 'bin/*', 'lib/**/*', 'config/**/*', 'doc/**/*']
-  s.require_path = 'lib'
-
-
-  s.add_dependency('eventmachine', '0.12.10')
-  s.add_dependency('json', '1.4.6')
-
-  
+  spec.bindir       = 'bin'
+  spec.executables  = ['deadpool-admin', 'deadpool-generator', 'deadpool-hosts']
+  spec.files        = Dir['README', 'bin/*', 'lib/**/*', 'config/**/*', 'doc/**/*']
+  spec.require_path = 'lib'
+  # spec.add_dependency('eventmachine', '1.2.7')
+  # spec.add_dependency('json', '2.3.0')
+  spec.add_runtime_dependency('eventmachine', '1.2.7')
+  spec.add_runtime_dependency('json', '2.3.0')
 end
