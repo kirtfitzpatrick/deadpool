@@ -2,4 +2,4 @@
 
 gem build deadpool.gemspec
 docker build -t deadpool .
-docker run --rm -t -i deadpool
+docker run --rm -ti deadpool

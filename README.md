@@ -2,7 +2,7 @@
 
 Named this before I knew of the comic book character. 
 I thought I was so clever coming up with such a short descriptive 
-name. ¯\_(ツ)_/¯
+name. ¯\\_(ツ)_/¯
 
 ## Motivation
 
@@ -68,14 +68,15 @@ $ tree /etc/deadpool/
 ```
 
 
-
 ## Overview
 
 ### Plugin Architecture
 
 Since there are guaranteed to be edge cases deadpool was designed to utilize
-additional custom plugins from the config directory.  Examples are created 
-for you by the deadpool-generator command.
+additional custom plugins from the config lib/deadpool directory.
+
+For examples look at the built in plugins in lib/deadpool/failover_protocol 
+and lib/deadpool/monitor in this code base.
 
 ### Chainable Failover Protocols
 

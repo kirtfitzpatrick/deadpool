@@ -21,8 +21,6 @@ $ deadpool-generator --help
   spec.executables  = ['deadpool-admin', 'deadpool-generator', 'deadpool-hosts']
   spec.files        = Dir['README', 'bin/*', 'lib/**/*', 'config/**/*', 'doc/**/*']
   spec.require_path = 'lib'
-  # spec.add_dependency('eventmachine', '1.2.7')
-  # spec.add_dependency('json', '2.3.0')
   spec.add_runtime_dependency('eventmachine', '1.2.7')
   spec.add_runtime_dependency('json', '2.3.0')
 end

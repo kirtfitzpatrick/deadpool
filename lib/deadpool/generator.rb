@@ -103,17 +103,17 @@ module Deadpool
       upstart_script_path = options[:upstart_script_path]
       config_params       = config_path.nil? ? '' : "--config_path=#{config_path}"
       ruby_path           = `which ruby`.strip
-      deadpool-admin_path = `which deadpool-admin`.strip
+      deadpool_admin_path = `which deadpool-admin`.strip
       
       upstart_conf =<<-EOF
 description     "Deadpool Service"
-author          "Kirt Fitzpatrick <kirt.fitzpatrick@akqa.com>"
+author          "Kirt Fitzpatrick"
 
 umask 007
 start on (net-device-up and local-filesystems)
 stop on runlevel [016]
 respawn
-exec #{ruby_path} #{deadpool-admin_path} --foreground #{config_params}
+exec #{ruby_path} #{deadpool_admin_path} --foreground #{config_params}
 
       EOF
 
@@ -168,7 +168,7 @@ monitor_config:
   nagios_plugin_path: '/usr/lib/nagios/plugins'
 
 # There can be as many Failover Protocols as you want and you can use 
-# the same plugin multiple times.  The deadpool defines no riles for the 
+# the same plugin multiple times.  The deadpool defines no rules for the 
 # failover protocol config except that it be an array element of 
 # failover_protocol_configs and defines protocol_class at it's base.  The rest
 # of the configuration is specific to the failover protocol.
