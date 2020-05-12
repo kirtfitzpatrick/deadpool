@@ -59,31 +59,29 @@ $ tree /etc/deadpool/
 |   |-- environment.yml
 |   `-- pools
 |       `-- example.yml
-`-- lib
-    `-- deadpool
-        |-- failover_protocol
-        `-- monitor
 
-6 directories, 2 files
+2 directories, 2 files
 ```
 
+config/environment.yml contains the config for deadpool itself
+
+config/pools/ contains any number of .yml files, one for each service you need to
+monitor and failover. eg. redis.yml, mysql.yml, etc.
 
 ## Overview
 
-### Plugin Architecture
+### Monitoring Through Nagios Plugins
 
-Since there are guaranteed to be edge cases deadpool was designed to utilize
-additional custom plugins from the config lib/deadpool directory.
-
-For examples look at the built in plugins in lib/deadpool/failover_protocol 
-and lib/deadpool/monitor in this code base.
+The nagios plugin format bacame an industry standard for nearly a decade and the 
+plugins are still available on most systems and can be installed as a standalone
+package. Whatever you're trying to monitor there is probably already a nagios plugin
+written for it. And if there isn't it's dead simple to write your own.
 
 ### Chainable Failover Protocols
 
 deadpool can take any number of FailoverProtocols
 and execute them in succession in the event of a failover.  Such as 
 restarting nginx after making a change to /etc/hosts.
-
 
 ### Multiple Services
 
@@ -150,12 +148,23 @@ restarted to work again.  This may change in a future release.
 
 ### Deadpool Server
 ```
-$ gem install deadpool
-$ sudo deadpool-generator --configuration
-$ sudo deadpool-generator --upstart_init
+gem install deadpool
+sudo deadpool-generator --configuration
+/usr/bin/ruby /usr/local/bin/deadpool-admin --foreground --config_path=/etc/deadpool
 ```
 
-### App Server
+The generator can also install upstart init configuration, but unfortunately
+upstart died an early death (RIP) so this has limited utility anymore. Deadpool 
+will be updated to generate systemd config or whatever in upcoming releases.
+
+### Client Servers
+
+Manipulating /etc/hosts is not without risk so a dedicated script is installed
+with the deadpool gem to handle it. Therefore the gem needs to be installed on
+each server whose /etc/hosts file you need to manipulate in the event of a 
+failover. Deadpool currently performs failover by exec'ing commands over ssh. 
+Take your own security precautions on the client hosts as you see fit. Here's 
+an example below:
 
 ```
 $ gem install deadpool
@@ -166,6 +175,9 @@ $ which deadpool-hosts
 ```
 
 ## Configuration
+
+The configuration is only stored on the deadpool server. By default configuration
+is stored in /etc/deadpool. Below is /etc/deadpool/config/pools/example.yml
 
 ```yaml
 pool_name: 'production_database'
