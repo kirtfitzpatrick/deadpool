@@ -1,29 +1,47 @@
 # Deadpool
 
-Named this before I knew of the comic book character. 
-I thought I was so clever coming up with such a short descriptive 
+The failover option of last resort. Seriously, if you can handle
+failover any way other than /etc/hosts you should do that.
+
+Named this before I knew of the comic book character. I thought 
+I was sooo clever coming up with such a short yet descriptive 
 name. ¯\\_(ツ)_/¯
-
-## Motivation
-
-We needed a way to provide automated failover on various systems 
-where we don't have access to virtual IPs, internal DNS, or any
-other industry standard failover solution. And we had TONS of
-client apps each with their own infrastructure and a small staff
-that REALLY doesn't like getting woken up in the middle of the 
-night. What use were all these hot standby DBs if a developer
-had to fix every problem anyway?
-
-Something had to be done. Surely a secondary could temorarily take 
-over for a primary until staff came in in the morning.
 
 ## Goals
 
 - Failover via /etc/hosts.
 - Perform ANY auxiliary duties necessary for a successful failover. 
   (i.e. restart job servers, web servers, hang maintenance page, etc..)
-- Monitor the status of the entire failover system and report to Nagios.
+- Monitor the status of the entire failover system
 - Perform or reset the failover manually from the command line.
+
+## Try It!
+
+If you have Docker Desktop try it out locally. Also if you want to modify
+or contribute to it this is the local development environment.
+
+```console
+$ git clone git@github.com:kirtfitzpatrick/deadpool.git
+$ cd deadpool
+$ ./build.sh 
+```
+
+Play around with it to make sure it's working:
+
+```console
+$ docker-compose ps
+$ docker-compose exec deadpool deadpool-admin --full_report
+$ docker-compose exec deadpool deadpool-admin --nagios_report
+$ docker-compose exec deadpool deadpool-admin --promote_server --pool=mysql --server=secondary_host
+$ docker-compose exec deadpool deadpool-admin --promote_server --pool=mysql --server=primary_host
+```
+
+And to verify that the monitor and failover work:
+
+```console
+$ docker-compose stop db1 && docker-compose logs -f --tail=5
+```
+
 
 ## Installation
 

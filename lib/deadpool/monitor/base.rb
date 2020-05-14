@@ -57,6 +57,9 @@ module Deadpool
       def name
         @monitor_config[:name].nil? ? nil : @monitor_config[:name]
       end
+
     end
+
   end
+  
 end
