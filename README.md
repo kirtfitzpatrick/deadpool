@@ -130,7 +130,7 @@ Probably change the log level to DEBUG until you get everything sorted.
 Start the server with the following command:
 
 ```console
-$ /usr/bin/ruby /usr/local/bin/deadpool-admin --foreground --config_path=/etc/deadpool
+$ /usr/bin/ruby /usr/local/bin/deadpool-admin --foreground
 ```
 
 The generator can also install upstart init configuration, but unfortunately
@@ -140,34 +140,6 @@ I'll update this to whatever the flavor of the month is in an upcoming release.
 
 ### Putting it all together
 
-Once it's installed, configured and running you should be able to get 
-the status of the system by running asking deadpool-admin for a full report.
-
-```console
-$ deadpool-admin --full_report
-System Status: OK
-
-Deadpool::Server - 
-OK - checked 3 seconds ago.
-
-  production_database - Deadpool::Handler
-  OK - checked 5 seconds ago.
-  Primary Check OK.
-
-      - Deadpool::Monitor::Mysql
-    OK - checked 3 seconds ago.
-    Primary and Secondary are up.
-
-      - Deadpool::FailoverProtocol::EtcHosts
-    OK - checked 2 seconds ago.
-    Write check passed all servers: 10.1.2.3, 10.1.2.4
-    All client hosts are pointed at the primary.
-
-      - Deadpool::FailoverProtocol::ExecRemoteCommand
-    OK - checked 2 seconds ago.
-    Exec test passed all servers: 10.1.2.3, 10.1.2.4
-```
-  
 If the server is up and it can write to the /etc/hosts file on all the app 
 servers you can use the following command to add the new entry to 
 /etc/hosts on all your app servers.
@@ -176,6 +148,34 @@ servers you can use the following command to add the new entry to
 $ deadpool-admin --pool=example_mysql --promote_server=primary_host
 ```
 
+Once it's installed, configured and running you should be able to get 
+the status of the system by running asking deadpool-admin for a full report.
+
+```console
+$ deadpool-admin --full_report
+System Status: OK
+
+Deadpool::Server
+OK - checked 3 seconds ago.
+
+  production_database - Deadpool::Handler
+  OK - checked 5 seconds ago.
+  Primary Check OK.
+
+    Deadpool::Monitor::Mysql
+    OK - checked 3 seconds ago.
+    Primary and Secondary are up.
+
+    Deadpool::FailoverProtocol::EtcHosts
+    OK - checked 2 seconds ago.
+    Write check passed all servers: 10.1.2.3, 10.1.2.4
+    All client hosts are pointed at the primary.
+
+    Deadpool::FailoverProtocol::ExecRemoteCommand
+    OK - checked 2 seconds ago.
+    Exec test passed all servers: 10.1.2.3, 10.1.2.4
+```
+  
 If deadpool reports everything is okay you can now connect it to Nagios via 
 the built in Nagios reporting flag.  Keep in mind that for the Nagios check 
 is cached from the last system check.  --full_report is not cached.

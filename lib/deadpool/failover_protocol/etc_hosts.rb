@@ -27,7 +27,7 @@ module Deadpool
         output = run_script_command(client_host, '--test')
         logger.debug "Output recieved From Client: #{output}"
 
-        if output.class == String
+        if output.is_a? String
           okay = (output =~ /^OK/) != nil
           okay ? logger.info("#{client_host}: " + output.strip) : logger.error("#{client_host}: " + output.strip)
         else
@@ -45,7 +45,7 @@ module Deadpool
         output            = run_script_command(client_host, command_arguments)
         logger.debug "Output recieved From Client: #{output}"
 
-        if output.class == String
+        if output.is_a? String
           okay = (output =~ /^OK/) != nil
           okay ? logger.info("#{client_host}: " + output.strip) : logger.error("#{client_host}: " + output.strip)
         else
@@ -57,23 +57,23 @@ module Deadpool
 
       def promote_to_primary(new_primary)
         @client_hosts.map do |client_host|
-          # logger.debug "client_host: #{client_host}, New Primary: #{new_primary}"
+          logger.debug "client_host: #{client_host}, New Primary: #{new_primary}"
           promote_to_primary_on_client(client_host, new_primary)
         end.all?
       end
 
       def promote_to_primary_on_client(client_host, new_primary)
-        # logger.debug "Assigning #{new_primary} as new primary on #{client_host}"
+        logger.debug "Assigning #{new_primary} as new primary on #{client_host}"
         command_arguments = "--switch --host_name='#{@service_host_name}' --ip_address='#{new_primary}'"
         command_arguments += " --host_file='#{@service_hosts_file}'" if @service_hosts_file
         output            = run_script_command(client_host, command_arguments)
         logger.debug "Output received From Client: #{output}"
 
-        if output.class == String
+        if output.is_a? String
           okay = (output =~ /^OK/) != nil
           okay ? logger.info("#{client_host}: " + output.strip) : logger.error("#{client_host}: " + output.strip)
         else
-          logger.error "Promote to Primary on Client had a critical failure on '#{client_host}'"
+          logger.error "Promote to Primary on Client had a critical failure on '#{client_host}', output.class: #{output.class}"
         end
 
         return okay
@@ -134,9 +134,10 @@ module Deadpool
       protected
 
       def run_script_command(host, command_arguments)
-        options = @password.nil? ? {} : {:password => @password}
         command = "#{@script_path} #{command_arguments}"
-        command = "#{@sudo_path} #{command}" if @use_sudo
+        command = "#{@sudo_path} #{command}" if @use_sudo == 1
+        options = {:timeout => 3}
+        options[:password] = @password unless @password.nil?
 
         logger.debug "executing #{command} on #{host}"
 

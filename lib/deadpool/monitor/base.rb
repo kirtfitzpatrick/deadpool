@@ -1,6 +1,10 @@
+
 module Deadpool
+
   module Monitor
+
     class Base
+      
       attr_accessor :logger
 
       def initialize(config, monitor_config, logger)
@@ -21,7 +25,7 @@ module Deadpool
       end
 
       def state
-        @state ||= Deadpool::State.new name, self.class
+        @state ||= Deadpool::State.new name, self.class.to_s
       end
 
       protected
@@ -51,7 +55,7 @@ module Deadpool
       end
 
       def name
-        @monitor_config[:name].nil? ? '' : @monitor_config[:name]
+        @monitor_config[:name].nil? ? nil : @monitor_config[:name]
       end
     end
   end

@@ -22,7 +22,7 @@ module Deadpool
       protected
 
       def check_host(host)
-        check_command  = "#{nagios_plugin_path} -H #{host} #{nagios_options}"
+        check_command  = "#{nagios_plugin_path} #{nagios_options} -H #{host}"
         logger.debug check_command
         status_message = `#{check_command}`
         exit_status    = $?
@@ -33,11 +33,11 @@ module Deadpool
       end
 
       def nagios_plugin_path
-        @config[:monitor_config][:nagios_plugin_path]
+        @monitor_config[:nagios_plugin_path]
       end
 
       def nagios_options
-        @config[:monitor_config][:nagios_options]
+        @monitor_config[:nagios_options]
       end
 
     end

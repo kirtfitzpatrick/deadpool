@@ -1,0 +1,31 @@
+version: '3'
+services:
+  deadpool:
+    build: .
+    entrypoint: ["/opt/docker/init-deadpool.sh"]
+  app1:
+    build:
+      context: .
+      dockerfile: "Dockerfile.sshd"
+    expose:
+      - "22"
+  app2:
+    build:
+      context: .
+      dockerfile: "Dockerfile.sshd"
+    expose:
+      - "22"
+  db1:
+    image: "mysql/mysql-server:5.7.30"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: deadpool
+      MYSQL_USER: deadpool
+      MYSQL_PASSWORD: password
+  db2:
+    image: "mysql/mysql-server:5.7.30"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: deadpool
+      MYSQL_USER: deadpool
+      MYSQL_PASSWORD: password

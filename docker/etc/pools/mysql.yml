@@ -1,0 +1,25 @@
+pool_name:         'mysql'
+primary_host:      'db1'
+secondary_host:    'db2'
+check_interval:    1
+max_failed_checks: 3
+
+monitor_config:
+  monitor_class: Mysql
+  nagios_plugin_path: '/usr/lib/nagios/plugins/check_mysql'
+  username: 'deadpool'
+  password: 'password'
+  # monitor_class: GenericNagios
+  # nagios_plugin_path: '/usr/lib/nagios/plugins/check_dummy'
+  # nagios_options: '0 "Dummy check passed. ;-)"'
+
+failover_protocol_configs:
+  - protocol_class: EtcHosts
+    script_path: '/usr/local/bin/deadpool-hosts'
+    service_host_name: 'mysql.deadpool'
+    username: 'root'
+    password: 'password'
+    use_sudo: 0
+    client_hosts:
+      - 'app1'
+      - 'app2'

@@ -127,9 +127,6 @@ exec #{ruby_path} #{deadpool_admin_path} --foreground #{config_params}
             puts "#{upstart_config_path} has been (over)written."
             puts "#{upstart_init_path} already exists.  It should be a symbolic link that points to #{upstart_script_path}"
             ls_command = "ls -l #{upstart_init_path}"
-            # puts ls_command
-            # puts `#{ls_command}`
-            # puts "ln -s #{upstart_script_path} #{upstart_init_path}"
           else
             `ln -s #{upstart_script_path} #{upstart_init_path}`
           end
@@ -139,67 +136,71 @@ exec #{ruby_path} #{deadpool_admin_path} --foreground #{config_params}
       end
     end
 
-    # mkdir path/config/pools
-    #       path/config/environment.yml
-    #       path/config/pools/example.yml
-    # mkdir path/lib/deadpool/monitor
-    #       path/lib/deadpool/monitor
-    # mkdir path/lib/deadpool/failover_protocol
-    #       path/lib/deadpool/failover_protocol
+    # mkdir path/pools
+    #       path/environment.yml
+    #       path/pools/example.yml
     def generate_configuration(options)
       path = options[:config_path]
-      FileUtils.mkdir_p(File.join(path, 'config/pools'))
-      FileUtils.mkdir_p(File.join(path, 'lib/deadpool/monitor'))
-      FileUtils.mkdir_p(File.join(path, 'lib/deadpool/failover_protocol'))
-      File.open File.join(path, 'config/pools/example.yml'), 'w' do |file|
+      FileUtils.mkdir_p(File.join(path, 'pools'))
+      File.open File.join(path, 'pools/example.yml'), 'w' do |file|
         file.write <<-EOF
-pool_name:         'example_database'
+pool_name:         'example_mysql'
 primary_host:      '10.1.2.3'
 secondary_host:    '10.2.3.4'
-check_interval:    1
-max_failed_checks: 10
+check_interval:    1    # in seconds
+max_failed_checks: 10   # How many failed checks to allow before performing a failover
 
-# There can be only one monitor per pool at this time.  The deadpool system
-# defines no rules for the monitor configuration except that it is called
-# monitor_config: and has monitor_class: defined at the base level.  
-# All other configuration variables are plugin specific.
 monitor_config:
+  # Mysql, GenericNagios, or Redis
   monitor_class: Mysql
-  nagios_plugin_path: '/usr/lib/nagios/plugins'
+  # Full path to plugin
+  nagios_plugin_path: '/usr/lib/nagios/plugins/check_mysql'
 
-# There can be as many Failover Protocols as you want and you can use 
-# the same plugin multiple times.  The deadpool defines no rules for the 
-# failover protocol config except that it be an array element of 
-# failover_protocol_configs and defines protocol_class at it's base.  The rest
-# of the configuration is specific to the failover protocol.
 failover_protocol_configs:
+  # EtcHost is a built-in just for handling /etc/hosts manipulation
   - protocol_class: EtcHosts
-    script_path: '/usr/local/bin/deadpool_line_modifier'
-    service_host_name: 'master.mysql.example.project.client'
+    script_path: '/usr/local/bin/deadpool-hosts'
+    # service_host_name is the name that deadpool will manage in /etc/hosts 
+    # it can be anything you like. eg. db.prod.mycompany.org
+    service_host_name: 'org.env.service'
+    # The user account to connect to all the clients with to monitor and
+    # manage their /etc/hosts file with.
     username: 'deadpool'
     password: 'p4ssw0rd'
-    use_sudo: 1
+    use_sudo: 0
+    # These are the clients whose /etc/hosts will be monitored and modified
+    # by the deadpool server. eg, app servers, job servers, etc.
     client_hosts:
       - '10.3.4.5'   # app server 1 (web server)
       - '10.4.5.6'   # app server 2 (web server)
 
+  # ExecRemoteCommand is a generic protocol for executing shell commands
+  # on the clients.
   - protocol_class: ExecRemoteCommand
     test_command: '/etc/init.d/nginx status'
     exec_command: '/etc/init.d/nginx restart'
     username: 'deadpool'
     password: 'p4ssw0rd'
+    # It's recommended to limit the deadpool user to only the sudo
+    # commands that you specifically want it to be able to execute
+    # by modifying sudoers on the clients
     use_sudo: 1
     client_hosts:
-      - '10.3.4.5'   # app server 1 (web server)
-      - '10.4.5.6'   # app server 2 (web server)
+      - '10.3.4.5'
+      - '10.4.5.6'
+
         EOF
       end
       
-      environment_config_path = File.join(path, 'config/environment.yml')
+      environment_config_path = File.join(path, 'environment.yml')
       environment_conf = <<-EOF
 log_path: '/var/log/deadpool.log'
-log_level: INFO
+log_level: INFO             # Alternatively DEBUG, WARN, ERROR
+# The system check verifys everything including the failover protocols.
+# i.e. Can deadpool ssh into the clients? Can deadpool write to /etc/hosts on each client? etc.
 system_check_interval: 30
+# How the deadpool-admin cli communicates with the deadpool service.
+# If this port or hostname doesn't work for you, change it.
 admin_hostname: 'localhost'
 admin_port: 5507
 

@@ -1,0 +1,6 @@
+log_path: '/var/log/deadpool.log'
+# log_level: DEBUG
+log_level: INFO
+system_check_interval: 15
+admin_hostname: 'localhost'
+admin_port: 5507

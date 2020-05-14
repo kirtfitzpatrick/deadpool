@@ -23,7 +23,7 @@ module Deadpool
       default_config = YAML.load(File.read(File.join(File.dirname(__FILE__), '../../config/default_environment.yml')))
 
       begin
-        user_config = YAML.load(File.read(File.join(options[:config_path], 'config/environment.yml')))
+        user_config = YAML.load(File.read(File.join(options[:config_path], 'environment.yml')))
       rescue
         user_config = Hash.new
       end
@@ -31,8 +31,9 @@ module Deadpool
       return Deadpool::Helper.symbolize_keys default_config.merge(user_config).merge(options)
     end
 
-    def self.setup_logger(config)
-      logger       = Logger.new(config[:log_path])
+    def self.setup_logger(config, foreground=false)
+      stream = foreground ? STDOUT : config[:log_path]
+      logger = Logger.new(stream)
       logger.level = Logger.const_get(config[:log_level].upcase)
       
       return logger

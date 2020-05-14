@@ -12,22 +12,13 @@ module Deadpool
 
     def initialize(options)
       @options = options
-      @state   = Deadpool::State.new self.class.to_s
       @config  = Deadpool::Helper.configure(@options)
-      @logger  = Deadpool::Helper.setup_logger(@config)
-
-      # if @options[:daemonize]
-      #   options = @options[:pid_file].nil? ? {} : {:pid => @options[:pid_file]}
-      #   self.daemonize options
-      # end
-      # 
-      # load_handlers
-      # start_deadpool_handlers
-      # start_command_server
-      # schedule_system_check
+      @state   = Deadpool::State.new self.class.to_s
     end
 
     def run(daemonize)
+      @logger  = Deadpool::Helper.setup_logger(@config, ! daemonize)
+
       EventMachine::run {
         if daemonize
           options = @options[:pid_file].nil? ? {} : {:pid => @options[:pid_file]}
@@ -45,7 +36,7 @@ module Deadpool
       @handlers = {}
       @state.set_state(OK, 'Loading Handlers.')
 
-      Dir[@options[:config_path] + '/config/pools/*.yml'].each do |pool_yml|
+      Dir[@options[:config_path] + '/pools/*.yml'].each do |pool_yml|
         pool_config = Deadpool::Helper.symbolize_keys YAML.load(File.read(pool_yml))
         @handlers[pool_config[:pool_name]] = Deadpool::Handler.new(pool_config, logger)
       end
@@ -88,7 +79,7 @@ module Deadpool
 
     def promote_server(pool_name, server)
       unless @handlers[pool_name].nil?
-        # logger.debug "Pool Name: #{pool_name}, Server: #{server}"
+        logger.debug "Pool Name: #{pool_name}, Server: #{server}"
         return @handlers[pool_name].promote_server server
       else
         logger.error "'#{pool_name}' pool not found."

@@ -15,7 +15,6 @@ module Deadpool
 
   autoload :Admin,                'deadpool/admin'
   autoload :AdminServer,          'deadpool/admin_server'
-  autoload :CommandLineServer,    'deadpool/command_line_server'
   autoload :Daemonizer,           'deadpool/daemonizer'
   autoload :Generator,            'deadpool/generator'
   autoload :Handler,              'deadpool/handler'
@@ -25,11 +24,6 @@ module Deadpool
   autoload :StateSnapshot,        'deadpool/state_snapshot'
   autoload :Server,               'deadpool/server'
 
-
-  module FailoverProtocol
-    autoload :Base,               'deadpool/failover_protocol'
-  end
-
   module Monitor
     autoload :Base,               'deadpool/monitor/base'
     autoload :Mysql,              'deadpool/monitor/mysql'
@@ -37,6 +31,7 @@ module Deadpool
   end
 
   module FailoverProtocol
+    autoload :Base,               'deadpool/failover_protocol/base'
     autoload :EtcHosts,           'deadpool/failover_protocol/etc_hosts'
     autoload :ExecRemoteCommand,  'deadpool/failover_protocol/exec_remote_command'
   end

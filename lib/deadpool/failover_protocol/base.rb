@@ -1,6 +1,4 @@
 
-
-
 module Deadpool
 
   module FailoverProtocol
@@ -11,8 +9,8 @@ module Deadpool
       attr_reader :config
 
       def initialize(config, failover_config, logger)
-        @name            = failover_config[:name].nil? ? '' : failover_config[:name]
-        @state           = Deadpool::State.new @name, self.class
+        name            = failover_config[:name].nil? ? nil : failover_config[:name]
+        @state           = Deadpool::State.new name, self.class.to_s
         @config          = config
         @logger          = logger
         @primary_host    = @config[:primary_host]

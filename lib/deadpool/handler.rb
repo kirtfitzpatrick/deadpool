@@ -14,7 +14,7 @@ module Deadpool
         :secondary_host
 
     def initialize(config, logger)
-      @state             = Deadpool::State.new config[:pool_name], self.class
+      @state             = Deadpool::State.new config[:pool_name], self.class.to_s
       # @state             = Deadpool::State.new "Deadpool::Handler - #{config[:pool_name]}"
       @config            = config
       @logger            = logger
@@ -76,6 +76,7 @@ module Deadpool
     def promote_server(server)
       # This will stop at the first failure
       @config[server] && @failover_protocols.all? do |failover_protocol|
+        logger.debug "Promote: server: #{server.to_s}"
         failover_protocol.promote_to_primary @config[server]
       end
     end

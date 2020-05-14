@@ -9,8 +9,8 @@ module Deadpool
     
     def initialize(name, klass='')
       names = []
-      names << name unless (name.nil? and name.blank?)
-      names << klass.to_s unless (klass.nil? and klass.blank?)
+      names << name unless (name.nil? or name.empty?)
+      names << klass.to_s unless (klass.nil? or klass.empty?)
       @name = names.join " - "
       @locked = false
       reset!

@@ -22,12 +22,12 @@ module Deadpool
     end
 
     def parse_command_line
-      options               = Hash.new
+      options = Hash.new
       options[:command_count] = 0
-      options[:config_path]     = '/etc/deadpool'
+      options[:config_path] = '/etc/deadpool'
 
       @option_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: deadpool-hosts --command [options]"
+        opts.banner = "Usage: deadpool-admin --command [options]"
 
         opts.separator "Commands:"
         opts.on("-h", "--help", "Print this help message.") do |help|
