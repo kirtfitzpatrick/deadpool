@@ -15,13 +15,17 @@ $ deadpool-generator --help
   spec.author                = 'Kirt Fitzpatrick'
   spec.homepage              = 'https://github.com/kirtfitzpatrick/deadpool'
   spec.license               = 'MIT'
-  spec.required_ruby_version = '>= 2.7.0'
+  spec.required_ruby_version = '~> 2.7.0'
 
   spec.bindir       = 'bin'
   spec.executables  = ['deadpool-admin', 'deadpool-generator', 'deadpool-hosts']
   spec.files        = Dir['README', 'bin/*', 'lib/**/*', 'config/**/*']
   spec.require_path = 'lib'
-  spec.add_runtime_dependency('net-ssh', '6.0.2')
-  spec.add_runtime_dependency('eventmachine', '1.2.7')
-  spec.add_runtime_dependency('json', '2.3.0')
+  
+  spec.add_runtime_dependency('net-ssh', '~> 6.0.2')
+  spec.add_runtime_dependency('eventmachine', '~> 1.2.7')
+  spec.add_runtime_dependency('json', '~> 2.3.0')
+
+  spec.add_development_dependency('simplecov', '~> 0.18.5')
+  spec.add_development_dependency('mocha', '~> 1.2.1')
 end

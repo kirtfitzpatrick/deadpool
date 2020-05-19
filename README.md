@@ -30,10 +30,10 @@ Play around with it to make sure it's working:
 
 ```console
 $ docker-compose ps
-$ docker-compose exec deadpool deadpool-admin --full_report
-$ docker-compose exec deadpool deadpool-admin --nagios_report
-$ docker-compose exec deadpool deadpool-admin --promote_server --pool=mysql --server=secondary_host
-$ docker-compose exec deadpool deadpool-admin --promote_server --pool=mysql --server=primary_host
+$ docker-compose exec monitor deadpool-admin --full_report
+$ docker-compose exec monitor deadpool-admin --nagios_report
+$ docker-compose exec monitor deadpool-admin --promote_server --pool=mysql --server=secondary_host
+$ docker-compose exec monitor deadpool-admin --promote_server --pool=mysql --server=primary_host
 ```
 
 And to verify that the monitor and failover work:
@@ -135,12 +135,11 @@ $ deadpool-generator -c
 Configuration saved to /etc/deadpool
 $ tree /etc/deadpool
 /etc/deadpool
-`-- config
-    |-- environment.yml
-    `-- pools
-        `-- example.yml
+|-- environment.yml
+`-- pools
+    `-- example.yml
 
-2 directories, 2 files
+1 directory, 2 files
 ```
 
 Look around in the generated configs and add your real information to them.
@@ -163,7 +162,7 @@ servers you can use the following command to add the new entry to
 /etc/hosts on all your app servers.
 
 ```console
-$ deadpool-admin --pool=example_mysql --promote_server=primary_host
+$ deadpool-admin --promote_server --pool=mysql --server=primary_host
 ```
 
 Once it's installed, configured and running you should be able to get 
