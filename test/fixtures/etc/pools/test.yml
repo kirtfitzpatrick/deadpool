@@ -1,6 +1,6 @@
 pool_name:         'test.database'
-primary_host:      'localhost'
-secondary_host:    '127.0.0.1'
+primary:      'localhost'
+secondary:    '127.0.0.1'
 check_interval:    1
 max_failed_checks: 10
 

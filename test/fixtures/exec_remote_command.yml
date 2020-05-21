@@ -1,8 +1,8 @@
 
 
 pool_name: 'exec_remote_command_test'
-primary_host: 0.0.0.1
-secondary_host: 0.0.0.2
+primary: 0.0.0.1
+secondary: 0.0.0.2
 
 failover_protocol_configs:
   - protocol_class: ExecRemoteCommand

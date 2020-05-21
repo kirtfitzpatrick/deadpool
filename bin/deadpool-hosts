@@ -7,53 +7,53 @@ require 'strscan'
 class DeadpoolHosts
 
   def run
-    @options = self.parse_command_line
-    self.execute_command(@options)
+    @options = parse_command_line
+    execute_command(@options)
   end
 
   def parse_command_line
-    options          = OpenStruct.new
+    options = OpenStruct.new
     options.command_count = 0
 
     @option_parser = OptionParser.new do |opts|
-      opts.banner = "Usage: deadpool-hosts {help|test|verify|switch} [options]"
+      opts.banner = 'Usage: deadpool-hosts {help|test|verify|switch} [options]'
 
-      opts.separator "Commands:"
-      opts.on("-h", "--help", "Print this help message.") do |h|
-        options.help         = h
+      opts.separator 'Commands:'
+      opts.on('-h', '--help', 'Print this help message.') do |h|
+        options.help = h
         options.command_count += 1
-        options.command      = :help
+        options.command = :help
       end
-      opts.on("--test", "Test that /etc/hosts can be touched.") do |t|
-        options.test         = t
+      opts.on('--test', 'Test that /etc/hosts can be touched.') do |t|
+        options.test = t
         options.command_count += 1
-        options.command      = :test
+        options.command = :test
       end
-      opts.on("--verify", "Verify that /etc/hosts hast the IP address that you think it should.") do |v|
-        options.verify       = v
+      opts.on('--verify', 'Verify that /etc/hosts hast the IP address that you think it should.') do |v|
+        options.verify = v
         options.command_count += 1
-        options.command      = :verify
+        options.command = :verify
       end
-      opts.on("--switch", "Change the IP address in /etc/hosts") do |s|
-        options.switch       = s
+      opts.on('--switch', 'Change the IP address in /etc/hosts') do |s|
+        options.switch = s
         options.command_count += 1
-        options.command      = :switch
+        options.command = :switch
       end
-      
-      opts.separator "Options:"
-      opts.on("--host_name=HOSTNAME", String, "Hostname to regex on in /etc/hosts") do |h|
+
+      opts.separator 'Options:'
+      opts.on('--host_name=HOSTNAME', String, 'Hostname to regex on in /etc/hosts') do |h|
         options.host_name = h
       end
-      opts.on("--ip_address=IP_ADDRESS", String, "IP Address") do |ip|
+      opts.on('--ip_address=IP_ADDRESS', String, 'IP Address') do |ip|
         options.ip_address = ip
       end
-      opts.on("--hosts_file=HOST_FILE_PATH", String, "Alternate Path for the Hosts file") do |hosts|
+      opts.on('--hosts_file=HOST_FILE_PATH', String, 'Alternate Path for the Hosts file') do |hosts|
         options.hosts_file = hosts
       end
-      opts.on("--verbose", "Verbose Messages.") do |v|
+      opts.on('--verbose', 'Verbose Messages.') do |v|
         options.verbose = v
       end
-      opts.on("--debug", "Creates a dummy hosts file at /tmp/hosts and operates on that.  Overrides the alternate hosts file option.") do |d|
+      opts.on('--debug', 'Creates a dummy hosts file at /tmp/hosts and operates on that.  Overrides the alternate hosts file option.') do |d|
         options.debug = d
       end
     end
@@ -64,42 +64,35 @@ class DeadpoolHosts
     unless remaining_arguments.empty?
       help "[#{remaining_arguments.join(' ')}] is not understood."
     end
-    
-    if options.command_count == 0
-      help "You must specify a command."
-    end
+
+    help 'You must specify a command.' if options.command_count == 0
 
     option_sum = (options.help ? 1 : 0) + (options.test ? 1 : 0) + (options.verify ? 1 : 0) + (options.switch ? 1 : 0)
-    if option_sum > 1
-      help "Only one command can be specified."
-    end
+    help 'Only one command can be specified.' if option_sum > 1
 
     if options.verify
       options_valid = true
 
       if options.ip_address.nil?
-        puts "The verify command requires an ip_address argument."
+        puts 'The verify command requires an ip_address argument.'
         options_valid = false
-      elsif ! options.ip_address.match(/\d+\.\d+\.\d+\.\d+/)
+      elsif !options.ip_address.match(/\d+\.\d+\.\d+\.\d+/)
         puts "ip_address doesn't look valid."
         options_valid = false
       end
 
       if options.host_name.nil?
-        puts "The verify command requires a host_name argument."
+        puts 'The verify command requires a host_name argument.'
         options_valid = false
       elsif options.host_name.size < 4
-        puts "The host_name parameter must be longer than 4 characters."
+        puts 'The host_name parameter must be longer than 4 characters.'
         options_valid = false
       end
 
-      unless options_valid
-        help
-      end
+      help unless options_valid
     end
 
-
-    return options
+    options
   end
 
   def execute_command(options)
@@ -117,10 +110,8 @@ class DeadpoolHosts
     end
   end
 
-  def help(message=nil)
-    unless message.nil?
-      puts message
-    end
+  def help(message = nil)
+    puts message unless message.nil?
     puts @option_parser.help
     exit 4
   end
@@ -139,7 +130,7 @@ class DeadpoolHosts
   end
 
   def verify(options)
-    scanner  = StringScanner.new File.read(host_file_path(options))
+    scanner = StringScanner.new File.read(host_file_path(options))
     verified = scanner.exist?(/#{options.ip_address}\s+#{options.host_name}\s+/)
 
     if verified
@@ -153,14 +144,14 @@ class DeadpoolHosts
 
   def switch(options)
     path = host_file_path(options)
-    scanner  = StringScanner.new File.read(path)
+    scanner = StringScanner.new File.read(path)
     host_exists = scanner.exist?(/\s+#{options.host_name}\s+/)
 
     if host_exists
       scanner.reset
       scanner.scan_until(/\n.+#{options.host_name}\s*\n/)
-      pre_match  = scanner.pre_match
-      matched    = scanner.matched
+      pre_match = scanner.pre_match
+      matched = scanner.matched
       post_match = scanner.post_match
       verbose_message "\nPreceding lines: \n#{pre_match}"
       verbose_message "\nMatched host definition: \n#{matched}"
@@ -169,21 +160,21 @@ class DeadpoolHosts
       replacement_file += "\n#{options.ip_address}  #{options.host_name}\n"
       replacement_file += post_match
       verbose_message "Replacement hosts file:\n#{replacement_file}"
-      verbose_message "Writing hosts file..."
+      verbose_message 'Writing hosts file...'
       hosts_file = File.open path, 'w'
       hosts_file.write replacement_file
       hosts_file.close
-      puts "OK - Host definition replaced successfully."
+      puts 'OK - Host definition replaced successfully.'
       exit 0
     else
       replacement_file = File.read(path)
       replacement_file += "\n#{options.ip_address}  #{options.host_name}\n"
       verbose_message "Replacement hosts file:\n#{replacement_file}"
-      verbose_message "Writing hosts file..."
+      verbose_message 'Writing hosts file...'
       hosts_file = File.open path, 'w'
       hosts_file.write replacement_file
       hosts_file.close
-      puts "OK - Host definition added successfully."
+      puts 'OK - Host definition added successfully.'
       exit 0
     end
   end
@@ -193,18 +184,16 @@ class DeadpoolHosts
       file = File.open '/tmp/hosts', 'w'
       file.write DATA.read
       file.close
-      return '/tmp/hosts'
+      '/tmp/hosts'
     elsif options.hosts_file
-      return options.hosts_file
+      options.hosts_file
     else
-      return '/etc/hosts'
+      '/etc/hosts'
     end
   end
 
   def verbose_message(message)
-    if @options.verbose
-      puts message
-    end
+    puts message if @options.verbose
   end
 
 end

@@ -1,19 +1,20 @@
-require 'test/test_helper'
+require 'test_helper'
 
 class FailoverProtocolTest < Test::Unit::TestCase
+
   class Deadpool::FailoverProtocol::Mock < Deadpool::FailoverProtocol::Base
   end
 
   def setup
-    config          = { :pool_name => "test.pool.fake" }
-    failover_config = { :name => "test.failover.fake" }
-    logger          = Logger.new("/dev/null")
+    config = { pool_name: 'test.pool.fake' }
+    failover_config = { name: 'test.failover.fake' }
+    logger = Logger.new('/dev/null')
 
     @failover = Deadpool::FailoverProtocol::Mock.new(config, failover_config, logger)
   end
 
   def test_initial_state
-    assert_equal "test.failover.fake - Deadpool::FailoverProtocol::Mock", @failover.instance_eval { @state }.name
+    assert_equal 'test.failover.fake - Deadpool::FailoverProtocol::Mock', @failover.instance_eval { @state }.name
   end
 
   def test_system_check
@@ -60,4 +61,5 @@ class FailoverProtocolTest < Test::Unit::TestCase
   def assert_status(status_code)
     assert_equal status_code, @failover.system_check.overall_status
   end
+
 end

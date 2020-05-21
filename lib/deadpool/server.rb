@@ -1,10 +1,8 @@
-
+# frozen_string_literal: true
 
 module Deadpool
-
   class Server
 
-    # include Deadpool::Options
     include Deadpool::Daemonizer
 
     attr_accessor :logger
@@ -12,24 +10,24 @@ module Deadpool
 
     def initialize(options)
       @options = options
-      @config  = Deadpool::Helper.configure(@options)
-      @state   = Deadpool::State.new self.class.to_s
+      @config = Deadpool::Helper.configure(@options)
+      @state = Deadpool::State.new self.class.to_s
     end
 
     def run(daemonize)
-      @logger  = Deadpool::Helper.setup_logger(@config, ! daemonize)
+      @logger = Deadpool::Helper.setup_logger(@config, !daemonize)
 
-      EventMachine::run {
+      EventMachine.run do
         if daemonize
-          options = @options[:pid_file].nil? ? {} : {:pid => @options[:pid_file]}
+          options = @options[:pid_file].nil? ? {} : { pid: @options[:pid_file] }
           self.daemonize options
         end
-      
+
         load_handlers
         start_deadpool_handlers
         start_command_server
         schedule_system_check
-      }
+      end
     end
 
     def load_handlers
@@ -37,7 +35,7 @@ module Deadpool
       @state.set_state(OK, 'Loading Handlers.')
 
       Dir[@options[:config_path] + '/pools/*.yml'].each do |pool_yml|
-        pool_config = Deadpool::Helper.symbolize_keys YAML.load(File.read(pool_yml))
+        pool_config = Deadpool::Helper.symbolize_keys YAML.safe_load(File.read(pool_yml))
         @handlers[pool_config[:pool_name]] = Deadpool::Handler.new(pool_config, logger)
       end
 
@@ -53,18 +51,22 @@ module Deadpool
     end
 
     def schedule_system_check
-      timer = EventMachine::PeriodicTimer.new(@config[:system_check_interval]) do
+      EventMachine::PeriodicTimer.new(@config[:system_check_interval]) do
         system_check(true)
       end
     end
 
     def start_command_server
-      EventMachine::start_server @config[:admin_hostname], @config[:admin_port], Deadpool::AdminServer do |connection|
+      EventMachine.start_server(
+        @config[:admin_hostname],
+        @config[:admin_port],
+        Deadpool::CommandServer
+      ) do |connection|
         connection.deadpool_server = self
       end
     end
 
-    def system_check(force=false)
+    def system_check(force = false)
       if force || @cached_state_snapshot.nil?
         @state.reset!
         @cached_state_snapshot = Deadpool::StateSnapshot.new @state
@@ -74,19 +76,18 @@ module Deadpool
         end
       end
 
-      return @cached_state_snapshot
+      @cached_state_snapshot
     end
 
-    def promote_server(pool_name, server)
-      unless @handlers[pool_name].nil?
-        logger.debug "Pool Name: #{pool_name}, Server: #{server}"
-        return @handlers[pool_name].promote_server server
-      else
+    def promote(pool_name, server)
+      if @handlers[pool_name].nil?
         logger.error "'#{pool_name}' pool not found."
-        return false
+        false
+      else
+        logger.debug "Pool Name: #{pool_name}, Server: #{server}"
+        @handlers[pool_name].promote server
       end
     end
 
   end
-
 end

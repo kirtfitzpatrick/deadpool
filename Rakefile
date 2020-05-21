@@ -1,20 +1,20 @@
+require 'bundler/gem_tasks'
 require 'rake/clean'
 require 'rake/testtask'
+require 'bump/tasks'
+require 'github_changelog_generator/task'
 
-task :default => [:test]
 
-task :test do
-  Rake::TestTask.new do |t|
-    t.libs << "test"
-    t.pattern = 'test/{unit}/**/*_test.rb'
-    t.verbose = true
-  end
+GitHubChangelogGenerator::RakeTask.new :changelog do |config|
+  config.user = 'kirtfitzpatrick'
+  config.project = 'deadpool'
+  config.since_tag = 'v1.0.0'
 end
 
-require 'rcov/rcovtask'
-Rcov::RcovTask.new do |t|
+Rake::TestTask.new(:test) do |t|
   t.libs << "test"
-  t.pattern = 'test/{unit}/**/*_test.rb'
-  t.rcov_opts << "-x /Users"
-  t.verbose = true
+  t.libs << "lib"
+  t.test_files = FileList["test/**/*_test.rb"]
 end
+
+task :default => :test

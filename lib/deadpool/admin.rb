@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require 'optparse'
 require 'ostruct'
@@ -5,69 +6,67 @@ require 'strscan'
 require 'socket'
 require 'json'
 
-
 module Deadpool
-
   class Admin
 
     def initialize(argv)
-      @argv     = argv
+      @argv = argv
     end
 
     def run
-      @options = self.parse_command_line
-      @config  = Deadpool::Helper.configure @options
+      @options = parse_command_line
+      @config = Deadpool::Helper.configure @options
 
-      self.execute_command(@options)
+      execute_command(@options)
     end
 
     def parse_command_line
-      options = Hash.new
+      options = {}
       options[:command_count] = 0
       options[:config_path] = '/etc/deadpool'
 
       @option_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: deadpool-admin --command [options]"
+        opts.banner = 'Usage: deadpool --command [options]'
 
-        opts.separator "Commands:"
-        opts.on("-h", "--help", "Print this help message.") do |help|
+        opts.separator 'Commands:'
+        opts.on('-h', '--help', 'Print this help message.') do |_help|
           options[:command_count] += 1
-          options[:command]        = :help
+          options[:command] = :help
         end
-        opts.on("--full_report", "Give the full system report.") do |full_report|
+        opts.on('--full_report', 'Give the full system report.') do |_full_report|
           options[:command_count] += 1
-          options[:command]        = :full_report
+          options[:command] = :full_report
         end
-        opts.on("--nagios_report", "Report system state in Nagios plugin format.") do |nagios_report|
+        opts.on('--nagios_report', 'Report system state in Nagios plugin format.') do |_nagios_report|
           options[:command_count] += 1
-          options[:command]        = :nagios_report
+          options[:command] = :nagios_report
         end
-        opts.on("--promote_server", "Promote specified server to the master.") do |nagios_report|
+        opts.on('--promote', 'Promote specified server to the master.') do |_nagios_report|
           options[:command_count] += 1
-          options[:command]        = :promote_server
+          options[:command] = :promote
         end
-        opts.on("--stop", "Stop the server.") do |stop|
+        opts.on('--stop', 'Stop the server.') do |_stop|
           options[:command_count] += 1
-          options[:command]        = :stop
+          options[:command] = :stop
         end
-        opts.on("--start", "Start the server in the background.") do |stop|
+        opts.on('--start', 'Start the server in the background.') do |_stop|
           options[:command_count] += 1
-          options[:command]        = :start
+          options[:command] = :start
         end
-        opts.on("--foreground", "Start the server in the foreground.") do |stop|
+        opts.on('--foreground', 'Start the server in the foreground.') do |_stop|
           options[:command_count] += 1
-          options[:command]        = :foreground
+          options[:command] = :foreground
         end
 
-        opts.separator "Options:"
-        opts.on("--server=SERVER_LABEL", String, "primary_host or secondary_host.") do |server|
+        opts.separator 'Options:'
+        opts.on('--server=SERVER_LABEL', String, 'primary or secondary.') do |server|
           options[:server] = server
         end
-        opts.on("--pool=POOL_NAME", String, "Deadpool name to operate on.") do |pool|
+        opts.on('--pool=POOL_NAME', String, 'Deadpool name to operate on.') do |pool|
           options[:pool] = pool
         end
-        opts.on("--config_path=PATH", String, 
-            "Path to configs and custom plugins. #{options[:config_path]} by default.") do |config_path|
+        opts.on('--config_path=PATH', String,
+                "Path to configs and custom plugins. #{options[:config_path]} by default.") do |config_path|
           options[:config_path] = config_path
         end
       end
@@ -78,11 +77,9 @@ module Deadpool
         help "[#{remaining_arguments.join(' ')}] is not understood."
       end
 
-      if options[:command_count] == 0
-        help "You must specify a command."
-      end
+      help 'You must specify a command.' if options[:command_count] == 0
 
-      return options
+      options
     end
 
     def execute_command(options)
@@ -93,8 +90,8 @@ module Deadpool
         full_report options
       when :nagios_report
         nagios_report options
-      when :promote_server
-        promote_server options
+      when :promote
+        promote options
       when :stop
         stop options
       when :start
@@ -106,20 +103,18 @@ module Deadpool
       end
     end
 
-    def help(message=nil)
-      unless message.nil?
-        puts message
-      end
+    def help(message = nil)
+      puts message unless message.nil?
       puts @option_parser.help
       exit 4
     end
 
-    def full_report(options)
-      puts send_command_to_deadpool_server :command => 'full_report'
+    def full_report(_options)
+      puts send_command_to_deadpool_server command: 'full_report'
     end
 
-    def nagios_report(options)
-      response = send_command_to_deadpool_server :command => 'nagios_report'
+    def nagios_report(_options)
+      response = send_command_to_deadpool_server command: 'nagios_report'
 
       if (response.to_s =~ /^OK/) != nil
         puts response.to_s
@@ -134,31 +129,29 @@ module Deadpool
         puts response.to_s
         exit UNKNOWN
       else
-        puts "UNKNOWN - #{response.to_s}"
+        puts "UNKNOWN - #{response}"
         exit UNKNOWN
       end
     end
 
-    def promote_server(options)
+    def promote(options)
       error_messages = []
 
       if options[:pool].nil?
-        error_messages << "Promoting server requires --pool argument."
+        error_messages << 'Promoting server requires --pool argument.'
       end
 
       if options[:server].nil?
-        error_messages << "Promoting server requires --server argument."
-      end
-      
-      unless error_messages.empty?
-        help error_messages.join "\n"
+        error_messages << 'Promoting server requires --server argument.'
       end
 
-      puts send_command_to_deadpool_server :command => 'promote_server', :pool => options[:pool], :server => options[:server]
+      help error_messages.join "\n" unless error_messages.empty?
+
+      puts send_command_to_deadpool_server command: 'promote', pool: options[:pool], server: options[:server]
     end
 
-    def stop(options)
-      puts send_command_to_deadpool_server :command => 'stop'
+    def stop(_options)
+      puts send_command_to_deadpool_server command: 'stop'
     end
 
     def start(options)
@@ -174,7 +167,7 @@ module Deadpool
 
       begin
         socket = TCPSocket.open(@config[:admin_hostname], @config[:admin_port])
-      rescue
+      rescue StandardError
         return "Couldn't connect to deadpool server.  Is it running?"
       end
 
@@ -188,10 +181,8 @@ module Deadpool
         return "Couldn't connect to deadpool server."
       end
 
-      return output
+      output
     end
 
   end
-
 end
-

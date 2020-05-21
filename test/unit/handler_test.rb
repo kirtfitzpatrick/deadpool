@@ -1,14 +1,23 @@
-require 'test/test_helper'
+require 'test_helper'
 
 class HandlerTest < Test::Unit::TestCase
 
   class MockTimer
+
     def cancel; end
+
   end
 
   class Deadpool::Monitor::Mock < Deadpool::Monitor::Base
-    def primary_ok?; true; end
-    def secondary_ok?; true; end
+
+    def primary_ok?
+      true
+    end
+
+    def secondary_ok?
+      true
+    end
+
   end
 
   class Deadpool::FailoverProtocol::Mock < Deadpool::FailoverProtocol::Base
@@ -16,18 +25,16 @@ class HandlerTest < Test::Unit::TestCase
 
   def setup
     @config = {
-      :primary_host => "localhost",
-      :secondary_host => "127.0.0.1",
-      :pool_name => "test.fake",
-      :max_failed_checks => 2,
-      :monitor_config => { :monitor_class => "Mock" },
-      :failover_protocol_configs => [
-        { :protocol_class => "Mock" }
+      primary: 'localhost',
+      secondary: '127.0.0.1',
+      pool_name: 'test.fake',
+      max_failed_checks: 2,
+      monitor_config: { monitor_class: 'Mock' },
+      failover_protocol_configs: [
+        { protocol_class: 'Mock' }
       ]
     }
-
-    @logger = Logger.new("/dev/null")
-
+    @logger = Logger.new('/dev/null')
     @handler = Deadpool::Handler.new(@config, @logger)
   end
 
@@ -72,7 +79,7 @@ class HandlerTest < Test::Unit::TestCase
     assert_equal 2, @handler.failure_count
 
     assert @handler.state.instance_eval { @locked }
-    assert @handler.state.error_messages.include?("Failover Protocol in place.")
+    assert @handler.state.error_messages.include?('Failover Protocol in place.')
   end
 
   def test_monitor_pool_with_too_many_failures_and_failed_failover
@@ -92,7 +99,7 @@ class HandlerTest < Test::Unit::TestCase
     assert_equal 2, @handler.failure_count
 
     assert @handler.state.instance_eval { @locked }
-    assert @handler.state.error_messages.include?("Failover Protocol Failed!")
+    assert @handler.state.error_messages.include?('Failover Protocol Failed!')
   end
 
   def test_system_check_should_return_snapshot_of_state_monitor_and_failure_protocol_states
@@ -102,18 +109,18 @@ class HandlerTest < Test::Unit::TestCase
     assert_equal Deadpool::WARNING, @handler.system_check.overall_status
   end
 
-  def test_promote_server_with_no_host
-    assert !@handler.promote_server(nil)
+  def test_promote_with_no_host
+    assert !@handler.promote(nil)
   end
 
-  def test_promote_server_with_failed_promotion
+  def test_promote_with_failed_promotion
     Deadpool::FailoverProtocol::Mock.any_instance.expects(:promote_to_primary).returns(false)
-    assert !@handler.promote_server(:secondary_host)
+    assert !@handler.promote(:secondary)
   end
 
-  def test_promote_server_with_successful_promotion
+  def test_promote_with_successful_promotion
     Deadpool::FailoverProtocol::Mock.any_instance.expects(:promote_to_primary).returns(true)
-    assert @handler.promote_server(:secondary_host)
+    assert @handler.promote(:secondary)
   end
 
 end

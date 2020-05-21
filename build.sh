@@ -15,12 +15,14 @@ while [[ "${1:-}" != "" ]]; do
             docker build --target test -t deadpool .
             ;;
         -d|--dev)
-            docker build --target base -t deadpool_dev .
-            echo ""
-            echo "gem build deadpool.gemspec"
-            echo "gem install --development -N deadpool-1.0.0.gem"
-            echo "rake"
-            echo ""
+            docker build --target dev -t deadpool_dev .
+            # TODO: pull gem artifact from another build stage and use it to install the 
+            # development dependencies
+            # echo ""
+            # echo "gem build deadpool.gemspec"
+            # echo "gem install --development -N deadpool-1.0.0.gem"
+            # echo "rake"
+            # echo ""
             docker run --rm -ti --entrypoint "/bin/bash" --mount type=bind,source="$(pwd)",target=/opt deadpool_dev:latest
             ;;
         *)

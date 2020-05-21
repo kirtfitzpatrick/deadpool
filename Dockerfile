@@ -1,26 +1,40 @@
 FROM ubuntu:focal AS base
-RUN apt-get update 
-RUN apt-get install -y gcc g++ make ruby ruby-dev ssh
-RUN apt-get install -y tree bat vim
-RUN apt-get clean -y
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    bat \
+    g++ \
+    gcc \
+    make \
+    ruby \
+    ruby-dev \
+    ssh \
+    tree \
+    vim 
 WORKDIR /opt
 
 
-FROM base AS test
+FROM base AS build
 COPY . .
 RUN gem build deadpool.gemspec
+
+
+FROM base AS dev
+COPY --from=build /opt/deadpool-*.gem /tmp/
+RUN gem install --development --no-document /tmp/deadpool-*.gem
+ENTRYPOINT [ "/bin/bash" ]
+
+
+FROM build AS test
 RUN gem install --development --no-document deadpool-*.gem
 ENTRYPOINT ["rake"]
 
 
-FROM base AS deadpool
-COPY . .
-RUN gem build deadpool.gemspec
+FROM build AS deadpool
 RUN gem install --no-document deadpool-*.gem 
 
 
 FROM deadpool AS app
-RUN apt-get install -y openssh-server
+RUN apt-get update && apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
 RUN echo 'root:password' | chpasswd
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
@@ -32,7 +46,10 @@ ENTRYPOINT ["/usr/sbin/sshd", "-D"]
 
 
 FROM deadpool AS monitor
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y monitoring-plugins mysql-client
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    monitoring-plugins \
+    mysql-client
 RUN mkdir -p /etc/deadpool/pools
 RUN cp -R /opt/docker/etc/* /etc/deadpool/
 ENTRYPOINT ["/bin/bash"]

@@ -16,8 +16,8 @@ sed -i "s/app2/${APP2_IP}/" /etc/deadpool/pools/mysql.yml
 sleep 5
 
 # Setup /etc/hosts on all the app servers
-deadpool-admin --start
-deadpool-admin --promote_server --pool=mysql --server=primary_host
-deadpool-admin --stop
+deadpool --start
+deadpool --promote --pool=mysql --server=primary
+deadpool --stop
 # Start deadpool in the foreground for docker
-deadpool-admin --foreground
+deadpool --foreground

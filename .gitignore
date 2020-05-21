@@ -1,4 +1,15 @@
-coverage/*
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+/cdk/
+/.vscode/
 *.gem
-cdk
-.vsode
+
+
+# rspec failure tracking
+.rspec_status

@@ -1,12 +1,8 @@
-$:.unshift File.expand_path('../../lib', __FILE__)
-
-require 'rubygems'
-require 'test/unit'
-
-begin
-  require 'mocha'
-rescue LoadError
-  abort "Install mocha with `gem install mocha`"
-end
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+require 'simplecov'
+SimpleCov.start
 
 require 'deadpool'
+# require "minitest/autorun"
+require 'test/unit'
+require 'mocha/test_unit'

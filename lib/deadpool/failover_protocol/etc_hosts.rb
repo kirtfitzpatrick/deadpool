@@ -1,21 +1,18 @@
-
 require 'net/ssh'
 
 module Deadpool
-
   module FailoverProtocol
-
     class EtcHosts < Base
 
       def setup
-        @script_path        = @failover_config[:script_path]
-        @service_host_name  = @failover_config[:service_host_name]
+        @script_path = @failover_config[:script_path]
+        @service_host_name = @failover_config[:service_host_name]
         @service_hosts_file = @failover_config[:service_hosts_file]
-        @client_hosts       = @failover_config[:client_hosts]
-        @username           = @failover_config[:username]
-        @password           = @failover_config[:password]
-        @use_sudo           = @failover_config[:use_sudo]
-        @sudo_path          = @failover_config[:sudo_path].nil? ? 'sudo' : @failover_config[:sudo_path]
+        @client_hosts = @failover_config[:client_hosts]
+        @username = @failover_config[:username]
+        @password = @failover_config[:password]
+        @use_sudo = @failover_config[:use_sudo]
+        @sudo_path = @failover_config[:sudo_path].nil? ? 'sudo' : @failover_config[:sudo_path]
       end
 
       def preflight_check
@@ -34,15 +31,17 @@ module Deadpool
           logger.error "Test Client had a critical failure on '#{client_host}'"
         end
 
-        return okay
+        okay
       end
 
-      def verify_client(client_host, primary_host=nil)
+      def verify_client(client_host, primary = nil)
         logger.debug "Verifying Client #{client_host}"
-        primary_host      = primary_host.nil? ? @primary_host : primary_host
-        command_arguments = "--verify --host_name='#{@service_host_name}' --ip_address='#{primary_host}'"
-        command_arguments += " --host_file='#{@service_hosts_file}'" if @service_hosts_file
-        output            = run_script_command(client_host, command_arguments)
+        primary = primary.nil? ? @primary : primary
+        command_arguments = "--verify --host_name='#{@service_host_name}' --ip_address='#{primary}'"
+        if @service_hosts_file
+          command_arguments += " --host_file='#{@service_hosts_file}'"
+        end
+        output = run_script_command(client_host, command_arguments)
         logger.debug "Output recieved From Client: #{output}"
 
         if output.is_a? String
@@ -52,7 +51,7 @@ module Deadpool
           logger.error "Verify Client had a critical failure on '#{client_host}'"
         end
 
-        return okay
+        okay
       end
 
       def promote_to_primary(new_primary)
@@ -65,8 +64,10 @@ module Deadpool
       def promote_to_primary_on_client(client_host, new_primary)
         logger.debug "Assigning #{new_primary} as new primary on #{client_host}"
         command_arguments = "--switch --host_name='#{@service_host_name}' --ip_address='#{new_primary}'"
-        command_arguments += " --host_file='#{@service_hosts_file}'" if @service_hosts_file
-        output            = run_script_command(client_host, command_arguments)
+        if @service_hosts_file
+          command_arguments += " --host_file='#{@service_hosts_file}'"
+        end
+        output = run_script_command(client_host, command_arguments)
         logger.debug "Output received From Client: #{output}"
 
         if output.is_a? String
@@ -76,16 +77,16 @@ module Deadpool
           logger.error "Promote to Primary on Client had a critical failure on '#{client_host}', output.class: #{output.class}"
         end
 
-        return okay
+        okay
       end
-  
+
       def system_check
-        writable             = []
-        not_writable         = []
-        pointed_at_primary   = []
+        writable = []
+        not_writable = []
+        pointed_at_primary = []
         pointed_at_secondary = []
-        pointed_at_neither   = []
-    
+        pointed_at_neither = []
+
         # Collect check data
         @client_hosts.each do |client_host|
           if test_client(client_host)
@@ -94,17 +95,17 @@ module Deadpool
             not_writable << client_host
           end
 
-          if verify_client(client_host, @primary_host)
+          if verify_client(client_host, @primary)
             pointed_at_primary << client_host
           else
-            if verify_client(client_host, @secondary_host)
+            if verify_client(client_host, @secondary)
               pointed_at_secondary << client_host
             else
               pointed_at_neither << client_host
             end
           end
         end
-    
+
         # Compile write check data.
         if !writable.empty? && not_writable.empty?
           @state.set_state OK, "Write check passed all servers: #{writable.join(', ')}"
@@ -114,29 +115,27 @@ module Deadpool
         elsif writable.empty?
           @state.set_state WARNING, "Write check failed all servers: #{not_writable.join(', ')}"
         end
-    
 
         # Compile verification data
         if !pointed_at_primary.empty? && pointed_at_secondary.empty? && pointed_at_neither.empty?
-          @state.add_message "All client hosts are pointed at the primary."
+          @state.add_message 'All client hosts are pointed at the primary.'
         elsif pointed_at_primary.empty? && !pointed_at_secondary.empty? && pointed_at_neither.empty?
           @state.escalate_status_code WARNING
-          @state.add_error_message "All client hosts are pointed at the secondary."
+          @state.add_error_message 'All client hosts are pointed at the secondary.'
         else
           @state.escalate_status_code CRITICAL
-          @state.add_error_message "Client hosts are pointing in different directions."
+          @state.add_error_message 'Client hosts are pointing in different directions.'
         end
 
-        return Deadpool::StateSnapshot.new @state
+        Deadpool::StateSnapshot.new @state
       end
-
 
       protected
 
       def run_script_command(host, command_arguments)
         command = "#{@script_path} #{command_arguments}"
         command = "#{@sudo_path} #{command}" if @use_sudo == 1
-        options = {:timeout => 3}
+        options = { timeout: 3 }
         options[:password] = @password unless @password.nil?
 
         logger.debug "executing #{command} on #{host}"
@@ -145,14 +144,12 @@ module Deadpool
           Net::SSH.start(host, @username, options) do |ssh|
             return ssh.exec!(command)
           end
-        rescue
+        rescue StandardError
           logger.error "Couldn't execute #{command} on #{host}"
-          return false
+          false
         end
       end
 
     end
-    
   end
-
 end

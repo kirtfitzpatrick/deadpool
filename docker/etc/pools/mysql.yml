@@ -1,6 +1,6 @@
 pool_name:         'mysql'
-primary_host:      'db1'
-secondary_host:    'db2'
+primary:      'db1'
+secondary:    'db2'
 check_interval:    1
 max_failed_checks: 3
 

@@ -4,6 +4,8 @@ x-app:
   build:
     context: .
     target: app
+  secrets:
+    - public_ssh_key
   expose:
     - "22"
 x-db:
@@ -14,13 +16,20 @@ x-db:
     MYSQL_DATABASE: deadpool
     MYSQL_USER: deadpool
     MYSQL_PASSWORD: password
-  
+secrets:
+  private_ssh_key:
+    file: ./docker/secrets/ssh_key
+  public_ssh_key:
+    file: ./docker/secrets/ssh_key.pub
+
 services:
   monitor:
     build:
       context: .
       target: monitor
     entrypoint: ["/opt/docker/init-deadpool.sh"]
+    secrets:
+      - private_ssh_key
   app1: *app
   app2: *app
   db1: *db
